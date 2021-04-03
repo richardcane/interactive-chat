@@ -6,6 +6,7 @@ import java.awt.Color;
 import java.util.regex.Pattern;
 
 import javax.inject.Inject;
+
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.MessageNode;
@@ -19,11 +20,8 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
 
-@PluginDescriptor(
-	name = "Interactive Chat"
-)
-public class InteractiveChatPlugin extends Plugin
-{
+@PluginDescriptor(name = "Interactive Chat")
+public class InteractiveChatPlugin extends Plugin {
 	private static final Pattern SEARCH_PATTERN = Pattern.compile("((?<=\\])|(?=\\[))", Pattern.DOTALL);
 	private static final String LEFT_DELIMITER = "[";
 	private static final String RIGHT_DELIMITER = "]";
@@ -45,31 +43,25 @@ public class InteractiveChatPlugin extends Plugin
 	private OverlayManager overlayManager;
 
 	@Provides
-	InteractiveChatConfig provideConfig(ConfigManager configManager)
-	{
+	InteractiveChatConfig provideConfig(ConfigManager configManager) {
 		return configManager.getConfig(InteractiveChatConfig.class);
 	}
 
 	@Override
-	protected void startUp() throws Exception
-	{
+	protected void startUp() throws Exception {
 		overlayManager.add(overlay);
 	}
 
 	@Override
-	protected void shutDown() throws Exception
-	{
+	protected void shutDown() throws Exception {
 		overlayManager.remove(overlay);
 	}
 
 	@Subscribe
-	public void onChatMessage(ChatMessage chatMessage)
-	{
+	public void onChatMessage(ChatMessage chatMessage) {
 		final ChatMessageType type = chatMessage.getType();
-		if (type != ChatMessageType.FRIENDSCHAT &&
-				type != ChatMessageType.PRIVATECHAT &&
-				type != ChatMessageType.PUBLICCHAT)
-		{
+		if (type != ChatMessageType.FRIENDSCHAT && type != ChatMessageType.PRIVATECHAT
+				&& type != ChatMessageType.PUBLICCHAT) {
 			return;
 		}
 
@@ -77,16 +69,15 @@ public class InteractiveChatPlugin extends Plugin
 		String[] parts = SEARCH_PATTERN.split(messageContent);
 
 		ChatMessageBuilder builder = new ChatMessageBuilder();
-		for (String part : parts)
-		{
-			if (!part.startsWith(LEFT_DELIMITER))
-			{
+		for (String part : parts) {
+			if (!part.startsWith(LEFT_DELIMITER)) {
 				builder.append(ChatColorType.NORMAL);
 				builder.append(part);
 				continue;
 			}
 
-			builder.append(LINK_COLOR, part.trim());
+			final String searchTerm = part.substring(1, part.length() - 1);
+			builder.append(LINK_COLOR, String.format("[%s]", searchTerm.trim().replaceAll(" +", " ")));
 		}
 
 		final MessageNode messageNode = chatMessage.getMessageNode();
