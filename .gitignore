@@ -1,5 +1,6 @@
 .gradle
 build
+bin
 .idea/
 .project
 .settings/
@@ -9,4 +10,3 @@ nb-configuration.xml
 nbproject/
 **.orig
 .vscode
-bin
