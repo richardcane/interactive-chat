@@ -47,8 +47,9 @@ class InteractiveChatOverlay extends Overlay {
 
 	private void createHitbox() {
 		chatbox = getChatbox();
-		if (chatbox == null) return;
-		
+		if (chatbox == null)
+			return;
+
 		hitbox = chatbox.createChild(-1, WidgetType.RECTANGLE);
 		hitbox.setName("Wiki");
 		hitbox.setOpacity(255);
@@ -65,6 +66,10 @@ class InteractiveChatOverlay extends Overlay {
 	}
 
 	private void positionHitbox(int x, int y, int width) {
+		if (hitbox.getOriginalX() == x && hitbox.getOriginalY() == y && hitbox.getWidth() == width) {
+			return;
+		}
+
 		hitbox.setOriginalX(x);
 		hitbox.setOriginalY(y);
 		hitbox.setOriginalWidth(width);
@@ -76,7 +81,8 @@ class InteractiveChatOverlay extends Overlay {
 	public Dimension render(Graphics2D graphics) {
 		if (hitbox == null) {
 			createHitbox();
-			if (hitbox == null) return null;
+			if (hitbox == null)
+				return null;
 		}
 		positionHitbox(0, 0, 0);
 
@@ -129,7 +135,8 @@ class InteractiveChatOverlay extends Overlay {
 
 	private Widget getHoveredChatline() {
 		chatbox = getChatbox();
-		if (chatbox == null) return null;
+		if (chatbox == null)
+			return null;
 
 		Optional<Widget> optional = Stream.of(chatbox.getChildren()).filter(widget -> !widget.isHidden())
 				.filter(widget -> widget.getName() != "Wiki")
