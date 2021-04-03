@@ -47,17 +47,16 @@ class InteractiveChatOverlay extends Overlay {
 
 	private void createHitbox() {
 		chatbox = getChatbox();
+		if (chatbox == null) return;
+		
 		hitbox = chatbox.createChild(-1, WidgetType.RECTANGLE);
-
+		hitbox.setName("Wiki");
 		hitbox.setOpacity(255);
 		hitbox.setOriginalX(0);
 		hitbox.setOriginalY(0);
 		hitbox.setOriginalWidth(0);
 		hitbox.setOriginalHeight(14);
 		hitbox.setNoClickThrough(true);
-
-		hitbox.setAction(0, "Open");
-		hitbox.setName("Wiki");
 
 		hitbox.setHasListener(true);
 		hitbox.setOnClickListener((JavaScriptCallback) this::search);
@@ -129,6 +128,7 @@ class InteractiveChatOverlay extends Overlay {
 
 	private Widget getHoveredChatline() {
 		chatbox = getChatbox();
+		if (chatbox == null) return null;
 
 		Optional<Widget> optional = Stream.of(chatbox.getChildren()).filter(widget -> !widget.isHidden())
 				.filter(widget -> widget.getName() != "Wiki")
