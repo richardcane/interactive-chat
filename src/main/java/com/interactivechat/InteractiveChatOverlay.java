@@ -76,6 +76,7 @@ class InteractiveChatOverlay extends Overlay {
 	public Dimension render(Graphics2D graphics) {
 		if (hitbox == null) {
 			createHitbox();
+			if (hitbox == null) return null;
 		}
 		positionHitbox(0, 0, 0);
 
