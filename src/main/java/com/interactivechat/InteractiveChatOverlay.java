@@ -138,17 +138,17 @@ class InteractiveChatOverlay extends Overlay {
 		if (chatbox == null)
 			return null;
 
-		Optional<Widget> optional = Stream.of(chatbox.getChildren()).filter(widget -> !widget.isHidden())
+		Optional<Widget> maybeChatline = Stream.of(chatbox.getChildren()).filter(widget -> !widget.isHidden())
 				.filter(widget -> widget.getName() != "Wiki")
 				.filter(widget -> widget.getId() < WidgetInfo.CHATBOX_FIRST_MESSAGE.getId()).filter(widget -> {
 					int mouseY = this.client.getMouseCanvasPosition().getY();
 					return (mouseY >= widget.getBounds().getMinY() && mouseY <= widget.getBounds().getMaxY());
 				}).skip(1).findFirst();
 
-		if (!optional.isPresent()) {
+		if (!maybeChatline.isPresent()) {
 			return null;
 		}
-		return optional.get();
+		return maybeChatline.get();
 	}
 
 	private Widget getChatbox() {
