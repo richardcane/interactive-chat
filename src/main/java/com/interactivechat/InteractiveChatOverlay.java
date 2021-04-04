@@ -33,8 +33,8 @@ class InteractiveChatOverlay extends Overlay {
 	static final String LEFT_DELIMITER = "[";
 	static final String RIGHT_DELIMITER = "]";
 
-	static Widget chatbox;
-	static Widget hitbox;
+	static Widget chatboxWidget;
+	static Widget hitboxWidget;
 	static String search = "";
 
 	@Inject
@@ -46,42 +46,42 @@ class InteractiveChatOverlay extends Overlay {
 	}
 
 	private void createHitboxWidget() {
-		chatbox = this.getChatbox();
-		if (chatbox == null)
+		chatboxWidget = this.getChatboxWidget();
+		if (chatboxWidget == null)
 			return;
 
-		hitbox = chatbox.createChild(-1, WidgetType.RECTANGLE);
-		hitbox.setName("Wiki");
-		hitbox.setOpacity(255);
-		hitbox.setOriginalX(0);
-		hitbox.setOriginalY(0);
-		hitbox.setOriginalWidth(0);
-		hitbox.setOriginalHeight(14);
-		hitbox.setNoClickThrough(true);
+		hitboxWidget = chatboxWidget.createChild(-1, WidgetType.RECTANGLE);
+		hitboxWidget.setName("Wiki");
+		hitboxWidget.setOpacity(255);
+		hitboxWidget.setOriginalX(0);
+		hitboxWidget.setOriginalY(0);
+		hitboxWidget.setOriginalWidth(0);
+		hitboxWidget.setOriginalHeight(14);
+		hitboxWidget.setNoClickThrough(true);
 
-		hitbox.setHasListener(true);
-		hitbox.setOnClickListener((JavaScriptCallback) this::search);
+		hitboxWidget.setHasListener(true);
+		hitboxWidget.setOnClickListener((JavaScriptCallback) this::search);
 
-		hitbox.revalidate();
+		hitboxWidget.revalidate();
 	}
 
 	private void positionHitboxWidget(int x, int y, int width) {
-		if (hitbox.getOriginalX() == x && hitbox.getOriginalY() == y && hitbox.getWidth() == width) {
+		if (hitboxWidget.getOriginalX() == x && hitboxWidget.getOriginalY() == y && hitboxWidget.getWidth() == width) {
 			return;
 		}
 
-		hitbox.setOriginalX(x);
-		hitbox.setOriginalY(y);
-		hitbox.setOriginalWidth(width);
+		hitboxWidget.setOriginalX(x);
+		hitboxWidget.setOriginalY(y);
+		hitboxWidget.setOriginalWidth(width);
 
-		hitbox.revalidate();
+		hitboxWidget.revalidate();
 	}
 
 	@Override
 	public Dimension render(Graphics2D graphics) {
-		if (hitbox == null) {
+		if (hitboxWidget == null) {
 			this.createHitboxWidget();
-			if (hitbox == null)
+			if (hitboxWidget == null)
 				return null;
 		}
 		this.positionHitboxWidget(0, 0, 0);
@@ -100,11 +100,10 @@ class InteractiveChatOverlay extends Overlay {
 		final Point mousePoint = new Point(mouse.getX(), mouse.getY());
 
 		if (textWidth <= outerBounds.width) {
-			String[] parts = SEARCH_PATTERN.split(text);
-
 			int xForBounds = (int) outerBounds.getMinX();
 			int xForHitbox = chatLine.getOriginalX();
-			for (String part : parts) {
+
+			for (String part : SEARCH_PATTERN.split(text)) {
 				final int partWidth = font.getTextWidth(part);
 
 				if (!part.startsWith(LEFT_DELIMITER)) {
@@ -134,11 +133,11 @@ class InteractiveChatOverlay extends Overlay {
 	}
 
 	private Widget getHoveredChatline() {
-		chatbox = this.getChatbox();
-		if (chatbox == null)
+		chatboxWidget = this.getChatboxWidget();
+		if (chatboxWidget == null)
 			return null;
 
-		Optional<Widget> maybeChatline = Stream.of(chatbox.getChildren()).filter(widget -> !widget.isHidden())
+		Optional<Widget> maybeChatline = Stream.of(chatboxWidget.getChildren()).filter(widget -> !widget.isHidden())
 				.filter(widget -> widget.getName() != "Wiki")
 				.filter(widget -> widget.getId() < WidgetInfo.CHATBOX_FIRST_MESSAGE.getId()).filter(widget -> {
 					int mouseY = this.client.getMouseCanvasPosition().getY();
@@ -151,9 +150,9 @@ class InteractiveChatOverlay extends Overlay {
 		return maybeChatline.get();
 	}
 
-	private Widget getChatbox() {
-		if (chatbox != null) {
-			return chatbox;
+	private Widget getChatboxWidget() {
+		if (chatboxWidget != null) {
+			return chatboxWidget;
 		}
 
 		return this.client.getWidget(WidgetInfo.CHATBOX_MESSAGE_LINES);
