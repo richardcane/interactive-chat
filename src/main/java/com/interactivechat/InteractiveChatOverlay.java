@@ -45,8 +45,8 @@ class InteractiveChatOverlay extends Overlay {
 		setPosition(OverlayPosition.DYNAMIC);
 	}
 
-	private void createHitbox() {
-		chatbox = getChatbox();
+	private void createHitboxWidget() {
+		chatbox = this.getChatbox();
 		if (chatbox == null)
 			return;
 
@@ -65,7 +65,7 @@ class InteractiveChatOverlay extends Overlay {
 		hitbox.revalidate();
 	}
 
-	private void positionHitbox(int x, int y, int width) {
+	private void positionHitboxWidget(int x, int y, int width) {
 		if (hitbox.getOriginalX() == x && hitbox.getOriginalY() == y && hitbox.getWidth() == width) {
 			return;
 		}
@@ -80,11 +80,11 @@ class InteractiveChatOverlay extends Overlay {
 	@Override
 	public Dimension render(Graphics2D graphics) {
 		if (hitbox == null) {
-			createHitbox();
+			this.createHitboxWidget();
 			if (hitbox == null)
 				return null;
 		}
-		positionHitbox(0, 0, 0);
+		this.positionHitboxWidget(0, 0, 0);
 
 		Widget chatLine = this.getHoveredChatline();
 		if (client.isMenuOpen() || chatLine == null || chatLine.getWidth() == 486) {
@@ -119,7 +119,7 @@ class InteractiveChatOverlay extends Overlay {
 				if (partBounds.contains(mousePoint)) {
 					search = part.replace(LEFT_DELIMITER, "").replace(RIGHT_DELIMITER, "");
 
-					positionHitbox(xForHitbox, chatLine.getOriginalY() + 1, partWidth);
+					this.positionHitboxWidget(xForHitbox, chatLine.getOriginalY() + 1, partWidth);
 
 					graphics.setPaint(Color.GREEN);
 					graphics.fill(new Rectangle(partBounds.x + 2, partBounds.y + partBounds.height - 1, partBounds.width - 4, 1));
@@ -134,7 +134,7 @@ class InteractiveChatOverlay extends Overlay {
 	}
 
 	private Widget getHoveredChatline() {
-		chatbox = getChatbox();
+		chatbox = this.getChatbox();
 		if (chatbox == null)
 			return null;
 
