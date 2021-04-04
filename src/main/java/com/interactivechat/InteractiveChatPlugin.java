@@ -60,8 +60,15 @@ public class InteractiveChatPlugin extends Plugin {
 	@Subscribe
 	public void onChatMessage(ChatMessage chatMessage) {
 		final ChatMessageType type = chatMessage.getType();
-		if (type != ChatMessageType.FRIENDSCHAT && type != ChatMessageType.PRIVATECHAT
-				&& type != ChatMessageType.PUBLICCHAT) {
+		switch (type) {
+		case MODCHAT:
+		case PUBLICCHAT:
+		case PRIVATECHAT:
+		case PRIVATECHATOUT:
+		case MODPRIVATECHAT:
+		case FRIENDSCHAT:
+			break;
+		default:
 			return;
 		}
 
