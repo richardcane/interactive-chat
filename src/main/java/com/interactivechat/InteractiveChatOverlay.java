@@ -29,13 +29,15 @@ class InteractiveChatOverlay extends Overlay {
 	private final InteractiveChatConfig config;
 
 	static final HttpUrl WIKI_BASE = HttpUrl.parse("https://oldschool.runescape.wiki");
-	static final Pattern SEARCH_PATTERN = Pattern.compile("((?<=\\])|(?=\\[))", Pattern.DOTALL);
-	static final String LEFT_DELIMITER = "[";
-	static final String RIGHT_DELIMITER = "]";
+	
+	private final Pattern SEARCH_PATTERN = Pattern.compile("((?<=\\])|(?=\\[))", Pattern.DOTALL);
+	private final String LEFT_DELIMITER = "[";
+	private final String RIGHT_DELIMITER = "]";
+	private final String HITBOX_WIDGET_NAME = "InteractiveChatHitbox";
 
-	static Widget chatboxWidget;
-	static Widget hitboxWidget;
-	static String search = "";
+	private Widget chatboxWidget;
+	private Widget hitboxWidget;
+	private String search = "";
 
 	@Inject
 	InteractiveChatOverlay(Client client, InteractiveChatConfig config) {
@@ -106,7 +108,7 @@ class InteractiveChatOverlay extends Overlay {
 			return;
 
 		hitboxWidget = chatboxWidget.createChild(-1, WidgetType.RECTANGLE);
-		hitboxWidget.setName("Wiki");
+		hitboxWidget.setName(HITBOX_WIDGET_NAME);
 		hitboxWidget.setOpacity(255);
 		hitboxWidget.setOriginalX(0);
 		hitboxWidget.setOriginalY(0);
@@ -138,7 +140,7 @@ class InteractiveChatOverlay extends Overlay {
 			return null;
 
 		Optional<Widget> maybeChatline = Stream.of(chatboxWidget.getChildren()).filter(widget -> !widget.isHidden())
-				.filter(widget -> widget.getName() != "Wiki")
+				.filter(widget -> widget.getName() != HITBOX_WIDGET_NAME)
 				.filter(widget -> widget.getId() < WidgetInfo.CHATBOX_FIRST_MESSAGE.getId()).filter(widget -> {
 					int mouseY = this.client.getMouseCanvasPosition().getY();
 					return (mouseY >= widget.getBounds().getMinY() && mouseY <= widget.getBounds().getMaxY());
