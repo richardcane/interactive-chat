@@ -76,7 +76,7 @@ class InteractiveChatOverlay extends Overlay {
 			for (String part : SEARCH_PATTERN.split(text)) {
 				final int partWidth = font.getTextWidth(part);
 
-				if (!part.startsWith(LEFT_DELIMITER)) {
+				if (!part.startsWith(LEFT_DELIMITER) || !part.endsWith(RIGHT_DELIMITER)) {
 					xForBounds += partWidth;
 					xForHitbox += partWidth;
 					continue;
@@ -86,12 +86,12 @@ class InteractiveChatOverlay extends Overlay {
 						outerBounds.height);
 
 				if (partBounds.contains(mousePoint)) {
+					this.setHitboxPosition(xForHitbox, chatLine.getOriginalY() + 1, partWidth);
 					search = part.replace(LEFT_DELIMITER, "").replace(RIGHT_DELIMITER, "");
 
-					this.setHitboxPosition(xForHitbox, chatLine.getOriginalY() + 1, partWidth);
-
+					final Rectangle underline = new Rectangle(partBounds.x + 2, partBounds.y + partBounds.height - 1, partBounds.width - 4, 1);
 					graphics.setPaint(Color.GREEN);
-					graphics.fill(new Rectangle(partBounds.x + 2, partBounds.y + partBounds.height - 1, partBounds.width - 4, 1));
+					graphics.fill(underline);
 				}
 
 				xForBounds += partWidth;

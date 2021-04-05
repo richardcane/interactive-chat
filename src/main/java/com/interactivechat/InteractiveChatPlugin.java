@@ -70,11 +70,12 @@ public class InteractiveChatPlugin extends Plugin {
 			break;
 		default:
 			return;
-		};
+		}
+		;
 
 		ChatMessageBuilder builder = new ChatMessageBuilder();
 		for (String part : SEARCH_PATTERN.split(chatMessage.getMessage())) {
-			if (!part.startsWith(LEFT_DELIMITER)) {
+			if (!part.startsWith(LEFT_DELIMITER) || !part.endsWith(RIGHT_DELIMITER)) {
 				builder.append(ChatColorType.NORMAL);
 				builder.append(part);
 				continue;
