@@ -45,38 +45,6 @@ class InteractiveChatOverlay extends Overlay {
 		setPosition(OverlayPosition.DYNAMIC);
 	}
 
-	private void createHitboxWidget() {
-		chatboxWidget = this.getChatboxWidget();
-		if (chatboxWidget == null)
-			return;
-
-		hitboxWidget = chatboxWidget.createChild(-1, WidgetType.RECTANGLE);
-		hitboxWidget.setName("Wiki");
-		hitboxWidget.setOpacity(255);
-		hitboxWidget.setOriginalX(0);
-		hitboxWidget.setOriginalY(0);
-		hitboxWidget.setOriginalWidth(0);
-		hitboxWidget.setOriginalHeight(14);
-		hitboxWidget.setNoClickThrough(true);
-
-		hitboxWidget.setHasListener(true);
-		hitboxWidget.setOnClickListener((JavaScriptCallback) this::search);
-
-		hitboxWidget.revalidate();
-	}
-
-	private void positionHitboxWidget(int x, int y, int width) {
-		if (hitboxWidget.getOriginalX() == x && hitboxWidget.getOriginalY() == y && hitboxWidget.getWidth() == width) {
-			return;
-		}
-
-		hitboxWidget.setOriginalX(x);
-		hitboxWidget.setOriginalY(y);
-		hitboxWidget.setOriginalWidth(width);
-
-		hitboxWidget.revalidate();
-	}
-
 	@Override
 	public Dimension render(Graphics2D graphics) {
 		if (hitboxWidget == null) {
@@ -84,7 +52,7 @@ class InteractiveChatOverlay extends Overlay {
 			if (hitboxWidget == null)
 				return null;
 		}
-		this.positionHitboxWidget(0, 0, 0);
+		this.setHitboxPosition(0, 0, 0);
 
 		Widget chatLine = this.getHoveredChatline();
 		if (client.isMenuOpen() || chatLine == null || chatLine.getWidth() == 486) {
@@ -118,7 +86,7 @@ class InteractiveChatOverlay extends Overlay {
 				if (partBounds.contains(mousePoint)) {
 					search = part.replace(LEFT_DELIMITER, "").replace(RIGHT_DELIMITER, "");
 
-					this.positionHitboxWidget(xForHitbox, chatLine.getOriginalY() + 1, partWidth);
+					this.setHitboxPosition(xForHitbox, chatLine.getOriginalY() + 1, partWidth);
 
 					graphics.setPaint(Color.GREEN);
 					graphics.fill(new Rectangle(partBounds.x + 2, partBounds.y + partBounds.height - 1, partBounds.width - 4, 1));
@@ -130,6 +98,38 @@ class InteractiveChatOverlay extends Overlay {
 		}
 
 		return null;
+	}
+
+	private void createHitboxWidget() {
+		chatboxWidget = this.getChatboxWidget();
+		if (chatboxWidget == null)
+			return;
+
+		hitboxWidget = chatboxWidget.createChild(-1, WidgetType.RECTANGLE);
+		hitboxWidget.setName("Wiki");
+		hitboxWidget.setOpacity(255);
+		hitboxWidget.setOriginalX(0);
+		hitboxWidget.setOriginalY(0);
+		hitboxWidget.setOriginalWidth(0);
+		hitboxWidget.setOriginalHeight(14);
+		hitboxWidget.setNoClickThrough(true);
+
+		hitboxWidget.setHasListener(true);
+		hitboxWidget.setOnClickListener((JavaScriptCallback) this::search);
+
+		hitboxWidget.revalidate();
+	}
+
+	private void setHitboxPosition(int x, int y, int width) {
+		if (hitboxWidget.getOriginalX() == x && hitboxWidget.getOriginalY() == y && hitboxWidget.getWidth() == width) {
+			return;
+		}
+
+		hitboxWidget.setOriginalX(x);
+		hitboxWidget.setOriginalY(y);
+		hitboxWidget.setOriginalWidth(width);
+
+		hitboxWidget.revalidate();
 	}
 
 	private Widget getHoveredChatline() {
@@ -158,7 +158,7 @@ class InteractiveChatOverlay extends Overlay {
 		return this.client.getWidget(WidgetInfo.CHATBOX_MESSAGE_LINES);
 	}
 
-	protected void search(ScriptEvent ev) {
+	private void search(ScriptEvent ev) {
 		LinkBrowser.browse(WIKI_BASE.newBuilder().addQueryParameter("search", search).build().toString());
 	}
 
