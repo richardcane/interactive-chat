@@ -33,11 +33,10 @@ class InteractiveChatOverlay extends Overlay {
 	private final EventBus eventBus;
 
 	static final HttpUrl WIKI_BASE = HttpUrl.parse("https://oldschool.runescape.wiki");
-
-	private final Pattern SEARCH_PATTERN = Pattern.compile("((?<=\\])|(?=\\[))", Pattern.DOTALL);
-	private final String LEFT_DELIMITER = "[";
-	private final String RIGHT_DELIMITER = "]";
-	private final String HITBOX_WIDGET_NAME = "InteractiveChatHitbox";
+	static final Pattern SEARCH_PATTERN = Pattern.compile("((?<=\\])|(?=\\[))", Pattern.DOTALL);
+	static final String LEFT_DELIMITER = "[";
+	static final String RIGHT_DELIMITER = "]";
+	static final String HITBOX_WIDGET_NAME = "InteractiveChatHitbox";
 
 	private Widget chatboxWidget;
 	private Widget hitboxWidget;
@@ -56,25 +55,25 @@ class InteractiveChatOverlay extends Overlay {
 	@Override
 	public Dimension render(Graphics2D graphics) {
 		if (hitboxWidget == null) {
-			this.createHitboxWidget();
+			createHitboxWidget();
 			if (hitboxWidget == null)
 				return null;
 		}
-		this.setHitboxPosition(0, 0, 0);
+		setHitboxPosition(0, 0, 0);
 
-		final net.runelite.api.Point mouse = this.client.getMouseCanvasPosition();
+		final net.runelite.api.Point mouse = client.getMouseCanvasPosition();
 		final Point mousePoint = new Point(mouse.getX(), mouse.getY());
 
-		Widget message = this.getChatMessageAtPoint(mousePoint);
+		Widget message = getChatMessageAtPoint(mousePoint);
 		if (client.isMenuOpen() || message == null) {
 			return null;
 		}
 
 		final FontTypeFace font = message.getFont();
 		final String text = Text.removeFormattingTags(message.getText());
-		final Rectangle outerBounds = message.getBounds();
+		final Rectangle messageBounds = message.getBounds();
 
-		int xForBounds = (int) outerBounds.getMinX();
+		int xForBounds = (int) messageBounds.getMinX();
 		int xForHitbox = message.getOriginalX();
 
 		for (String part : SEARCH_PATTERN.split(text)) {
@@ -85,9 +84,9 @@ class InteractiveChatOverlay extends Overlay {
 				continue;
 			}
 
-			Rectangle partBounds = new Rectangle(xForBounds, (int) outerBounds.getMinY() + 1, partWidth, outerBounds.height);
+			Rectangle partBounds = new Rectangle(xForBounds, (int) messageBounds.getMinY() + 1, partWidth, messageBounds.height);
 			if (partBounds.contains(mousePoint)) {
-				this.setHitboxPosition(xForHitbox, message.getOriginalY() + 1, partWidth);
+				setHitboxPosition(xForHitbox, message.getOriginalY() + 1, partWidth);
 				search = part.replace(LEFT_DELIMITER, "").replace(RIGHT_DELIMITER, "");
 
 				final Rectangle underline = new Rectangle(partBounds.x + 2, partBounds.y + partBounds.height - 1,
@@ -116,7 +115,7 @@ class InteractiveChatOverlay extends Overlay {
 	}
 
 	private void createHitboxWidget() {
-		chatboxWidget = this.getChatboxWidget();
+		chatboxWidget = getChatboxWidget();
 		if (chatboxWidget == null)
 			return;
 
@@ -148,7 +147,7 @@ class InteractiveChatOverlay extends Overlay {
 	}
 
 	private Widget getChatMessageAtPoint(Point point) {
-		chatboxWidget = this.getChatboxWidget();
+		chatboxWidget = getChatboxWidget();
 		if (chatboxWidget == null)
 			return null;
 
@@ -156,7 +155,8 @@ class InteractiveChatOverlay extends Overlay {
 				.filter(widget -> widget.getWidth() != 486) // ignore various game messages and parent chat lines
 				.filter(widget -> widget.getName() != HITBOX_WIDGET_NAME)
 				.filter(widget -> widget.getId() < WidgetInfo.CHATBOX_FIRST_MESSAGE.getId())
-				.filter(widget -> widget.getBounds().contains(point)).findFirst();
+				.filter(widget -> widget.getBounds().contains(point))
+				.findFirst();
 
 		if (!maybeChatMessage.isPresent()) {
 			return null;
@@ -169,7 +169,7 @@ class InteractiveChatOverlay extends Overlay {
 			return chatboxWidget;
 		}
 
-		return this.client.getWidget(WidgetInfo.CHATBOX_MESSAGE_LINES);
+		return client.getWidget(WidgetInfo.CHATBOX_MESSAGE_LINES);
 	}
 
 	private void search(ScriptEvent ev) {
