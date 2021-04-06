@@ -25,7 +25,7 @@ public class InteractiveChatPlugin extends Plugin {
 	private static final Pattern SEARCH_PATTERN = Pattern.compile("((?<=\\])|(?=\\[))", Pattern.DOTALL);
 	private static final String LEFT_DELIMITER = "[";
 	private static final String RIGHT_DELIMITER = "]";
-	private final Color LINK_COLOR = Color.GREEN;
+	private final Color LINK_COLOR = new Color(85, 175, 251);
 
 	@Inject
 	private ChatMessageManager chatMessageManager;

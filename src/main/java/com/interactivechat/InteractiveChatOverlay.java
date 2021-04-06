@@ -14,10 +14,13 @@ import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.FontTypeFace;
 import net.runelite.api.ScriptEvent;
+import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.widgets.JavaScriptCallback;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.api.widgets.WidgetType;
+import net.runelite.client.eventbus.EventBus;
+import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.util.LinkBrowser;
@@ -27,9 +30,10 @@ import okhttp3.HttpUrl;
 class InteractiveChatOverlay extends Overlay {
 	private final Client client;
 	private final InteractiveChatConfig config;
+	private final EventBus eventBus;
 
 	static final HttpUrl WIKI_BASE = HttpUrl.parse("https://oldschool.runescape.wiki");
-	
+
 	private final Pattern SEARCH_PATTERN = Pattern.compile("((?<=\\])|(?=\\[))", Pattern.DOTALL);
 	private final String LEFT_DELIMITER = "[";
 	private final String RIGHT_DELIMITER = "]";
@@ -40,10 +44,12 @@ class InteractiveChatOverlay extends Overlay {
 	private String search = "";
 
 	@Inject
-	InteractiveChatOverlay(Client client, InteractiveChatConfig config) {
+	InteractiveChatOverlay(Client client, InteractiveChatConfig config, EventBus eventBus) {
 		this.client = client;
 		this.config = config;
+		this.eventBus = eventBus;
 
+		eventBus.register(this);
 		setPosition(OverlayPosition.DYNAMIC);
 	}
 
@@ -56,50 +62,57 @@ class InteractiveChatOverlay extends Overlay {
 		}
 		this.setHitboxPosition(0, 0, 0);
 
-		Widget chatLine = this.getHoveredChatline();
+		final net.runelite.api.Point mouse = this.client.getMouseCanvasPosition();
+		final Point mousePoint = new Point(mouse.getX(), mouse.getY());
+
+		Widget chatLine = this.getHoveredChatline(mousePoint);
 		if (client.isMenuOpen() || chatLine == null || chatLine.getWidth() == 486) {
 			return null;
 		}
 
 		final FontTypeFace font = chatLine.getFont();
 		final String text = Text.removeFormattingTags(chatLine.getText());
-		final int textWidth = font.getTextWidth(text);
 		final Rectangle outerBounds = chatLine.getBounds();
 
-		final net.runelite.api.Point mouse = this.client.getMouseCanvasPosition();
-		final Point mousePoint = new Point(mouse.getX(), mouse.getY());
+		int xForBounds = (int) outerBounds.getMinX();
+		int xForHitbox = chatLine.getOriginalX();
 
-		if (textWidth <= outerBounds.width) {
-			int xForBounds = (int) outerBounds.getMinX();
-			int xForHitbox = chatLine.getOriginalX();
-
-			for (String part : SEARCH_PATTERN.split(text)) {
-				final int partWidth = font.getTextWidth(part);
-
-				if (!part.startsWith(LEFT_DELIMITER) || !part.endsWith(RIGHT_DELIMITER)) {
-					xForBounds += partWidth;
-					xForHitbox += partWidth;
-					continue;
-				}
-
-				Rectangle partBounds = new Rectangle(xForBounds, (int) outerBounds.getMinY() + 1, partWidth,
-						outerBounds.height);
-
-				if (partBounds.contains(mousePoint)) {
-					this.setHitboxPosition(xForHitbox, chatLine.getOriginalY() + 1, partWidth);
-					search = part.replace(LEFT_DELIMITER, "").replace(RIGHT_DELIMITER, "");
-
-					final Rectangle underline = new Rectangle(partBounds.x + 2, partBounds.y + partBounds.height - 1, partBounds.width - 4, 1);
-					graphics.setPaint(Color.GREEN);
-					graphics.fill(underline);
-				}
-
+		for (String part : SEARCH_PATTERN.split(text)) {
+			final int partWidth = font.getTextWidth(part);
+			if (!part.startsWith(LEFT_DELIMITER) || !part.endsWith(RIGHT_DELIMITER)) {
 				xForBounds += partWidth;
 				xForHitbox += partWidth;
+				continue;
 			}
+
+			Rectangle partBounds = new Rectangle(xForBounds, (int) outerBounds.getMinY() + 1, partWidth, outerBounds.height);
+			if (partBounds.contains(mousePoint)) {
+				this.setHitboxPosition(xForHitbox, chatLine.getOriginalY() + 1, partWidth);
+				search = part.replace(LEFT_DELIMITER, "").replace(RIGHT_DELIMITER, "");
+
+				final Rectangle underline = new Rectangle(partBounds.x + 2, partBounds.y + partBounds.height - 1,
+						partBounds.width - 4, 1);
+				graphics.setPaint(new Color(85, 175, 251));
+				graphics.fill(underline);
+			}
+
+			xForBounds += partWidth;
+			xForHitbox += partWidth;
 		}
 
 		return null;
+	}
+
+	@Subscribe
+	public void onGameStateChanged(GameStateChanged event) {
+		switch (event.getGameState()) {
+		case LOGGING_IN:
+			chatboxWidget = null;
+			hitboxWidget = null;
+			break;
+		default:
+			break;
+		}
 	}
 
 	private void createHitboxWidget() {
@@ -134,17 +147,15 @@ class InteractiveChatOverlay extends Overlay {
 		hitboxWidget.revalidate();
 	}
 
-	private Widget getHoveredChatline() {
+	private Widget getHoveredChatline(Point mouse) {
 		chatboxWidget = this.getChatboxWidget();
 		if (chatboxWidget == null)
 			return null;
 
 		Optional<Widget> maybeChatline = Stream.of(chatboxWidget.getChildren()).filter(widget -> !widget.isHidden())
 				.filter(widget -> widget.getName() != HITBOX_WIDGET_NAME)
-				.filter(widget -> widget.getId() < WidgetInfo.CHATBOX_FIRST_MESSAGE.getId()).filter(widget -> {
-					int mouseY = this.client.getMouseCanvasPosition().getY();
-					return (mouseY >= widget.getBounds().getMinY() && mouseY <= widget.getBounds().getMaxY());
-				}).skip(1).findFirst();
+				.filter(widget -> widget.getId() < WidgetInfo.CHATBOX_FIRST_MESSAGE.getId())
+				.filter(widget -> widget.getBounds().contains(mouse)).skip(1).findFirst();
 
 		if (!maybeChatline.isPresent()) {
 			return null;
