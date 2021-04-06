@@ -36,6 +36,7 @@ class InteractiveChatOverlay extends Overlay {
 	static final String LEFT_DELIMITER = "[";
 	static final String RIGHT_DELIMITER = "]";
 	static final String HITBOX_WIDGET_NAME = "InteractiveChatHitbox";
+	static final int CHATLINE_MAX_WIDTH = 486;
 
 	private Widget chatboxWidget;
 	private Widget hitboxWidget;
@@ -71,29 +72,24 @@ class InteractiveChatOverlay extends Overlay {
 		final String text = Text.removeFormattingTags(message.getText());
 		final Rectangle messageBounds = message.getBounds();
 
-		int xForBounds = (int) messageBounds.getMinX();
 		int xForHitbox = message.getOriginalX();
 
+		Rectangle hoverBounds = new Rectangle((int) messageBounds.getMinX(), (int) messageBounds.getMinY() + 1, 0, messageBounds.height);
 		for (String part : SEARCH_PATTERN.split(text)) {
 			final int partWidth = font.getTextWidth(part);
-			if (!part.startsWith(LEFT_DELIMITER) || !part.endsWith(RIGHT_DELIMITER)) {
-				xForBounds += partWidth;
-				xForHitbox += partWidth;
-				continue;
-			}
+			hoverBounds.width = partWidth;
 
-			Rectangle partBounds = new Rectangle(xForBounds, (int) messageBounds.getMinY() + 1, partWidth, messageBounds.height);
-			if (partBounds.contains(mousePoint)) {
+			if (hoverBounds.contains(mousePoint) && part.startsWith(LEFT_DELIMITER) && part.endsWith(RIGHT_DELIMITER)) {
 				setHitboxPosition(xForHitbox, message.getOriginalY() + 1, partWidth);
 				search = part.replace(LEFT_DELIMITER, "").replace(RIGHT_DELIMITER, "");
 
-				final Rectangle underline = new Rectangle(partBounds.x + 2, partBounds.y + partBounds.height - 1,
-						partBounds.width - 4, 1);
-				graphics.setPaint(new Color(85, 175, 251));
+				final Rectangle underline = new Rectangle(hoverBounds.x + 2, hoverBounds.y + hoverBounds.height - 1,
+						hoverBounds.width - 4, 1);
+				graphics.setPaint(InteractiveChatPlugin.LINK_COLOR);
 				graphics.fill(underline);
 			}
 
-			xForBounds += partWidth;
+			hoverBounds.x += partWidth;
 			xForHitbox += partWidth;
 		}
 
@@ -146,11 +142,12 @@ class InteractiveChatOverlay extends Overlay {
 
 	private Widget getChatMessageAtPoint(Point point) {
 		chatboxWidget = getChatboxWidget();
-		if (chatboxWidget == null)
+		if (chatboxWidget == null || !chatboxWidget.getBounds().contains(point)) {
 			return null;
+		}
 
 		Optional<Widget> maybeChatMessage = Stream.of(chatboxWidget.getChildren()).filter(widget -> !widget.isHidden())
-				.filter(widget -> widget.getWidth() != 486) // ignore various game messages and parent chat lines
+				.filter(widget -> widget.getWidth() != CHATLINE_MAX_WIDTH) // ignore various game messages and parent chat lines
 				.filter(widget -> widget.getName() != HITBOX_WIDGET_NAME)
 				.filter(widget -> widget.getId() < WidgetInfo.CHATBOX_FIRST_MESSAGE.getId())
 				.filter(widget -> widget.getBounds().contains(point))
