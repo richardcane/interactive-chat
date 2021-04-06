@@ -65,17 +65,17 @@ class InteractiveChatOverlay extends Overlay {
 		final net.runelite.api.Point mouse = this.client.getMouseCanvasPosition();
 		final Point mousePoint = new Point(mouse.getX(), mouse.getY());
 
-		Widget chatLine = this.getHoveredChatline(mousePoint);
-		if (client.isMenuOpen() || chatLine == null || chatLine.getWidth() == 486) {
+		Widget message = this.getChatMessageAtPoint(mousePoint);
+		if (client.isMenuOpen() || message == null) {
 			return null;
 		}
 
-		final FontTypeFace font = chatLine.getFont();
-		final String text = Text.removeFormattingTags(chatLine.getText());
-		final Rectangle outerBounds = chatLine.getBounds();
+		final FontTypeFace font = message.getFont();
+		final String text = Text.removeFormattingTags(message.getText());
+		final Rectangle outerBounds = message.getBounds();
 
 		int xForBounds = (int) outerBounds.getMinX();
-		int xForHitbox = chatLine.getOriginalX();
+		int xForHitbox = message.getOriginalX();
 
 		for (String part : SEARCH_PATTERN.split(text)) {
 			final int partWidth = font.getTextWidth(part);
@@ -87,7 +87,7 @@ class InteractiveChatOverlay extends Overlay {
 
 			Rectangle partBounds = new Rectangle(xForBounds, (int) outerBounds.getMinY() + 1, partWidth, outerBounds.height);
 			if (partBounds.contains(mousePoint)) {
-				this.setHitboxPosition(xForHitbox, chatLine.getOriginalY() + 1, partWidth);
+				this.setHitboxPosition(xForHitbox, message.getOriginalY() + 1, partWidth);
 				search = part.replace(LEFT_DELIMITER, "").replace(RIGHT_DELIMITER, "");
 
 				final Rectangle underline = new Rectangle(partBounds.x + 2, partBounds.y + partBounds.height - 1,
@@ -147,20 +147,21 @@ class InteractiveChatOverlay extends Overlay {
 		hitboxWidget.revalidate();
 	}
 
-	private Widget getHoveredChatline(Point mouse) {
+	private Widget getChatMessageAtPoint(Point point) {
 		chatboxWidget = this.getChatboxWidget();
 		if (chatboxWidget == null)
 			return null;
 
-		Optional<Widget> maybeChatline = Stream.of(chatboxWidget.getChildren()).filter(widget -> !widget.isHidden())
+		Optional<Widget> maybeChatMessage = Stream.of(chatboxWidget.getChildren()).filter(widget -> !widget.isHidden())
+				.filter(widget -> widget.getWidth() != 486) // ignore various game messages and parent chat lines
 				.filter(widget -> widget.getName() != HITBOX_WIDGET_NAME)
 				.filter(widget -> widget.getId() < WidgetInfo.CHATBOX_FIRST_MESSAGE.getId())
-				.filter(widget -> widget.getBounds().contains(mouse)).skip(1).findFirst();
+				.filter(widget -> widget.getBounds().contains(point)).findFirst();
 
-		if (!maybeChatline.isPresent()) {
+		if (!maybeChatMessage.isPresent()) {
 			return null;
 		}
-		return maybeChatline.get();
+		return maybeChatMessage.get();
 	}
 
 	private Widget getChatboxWidget() {
