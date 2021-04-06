@@ -30,7 +30,6 @@ import okhttp3.HttpUrl;
 class InteractiveChatOverlay extends Overlay {
 	private final Client client;
 	private final InteractiveChatConfig config;
-	private final EventBus eventBus;
 
 	static final HttpUrl WIKI_BASE = HttpUrl.parse("https://oldschool.runescape.wiki");
 	static final Pattern SEARCH_PATTERN = Pattern.compile("((?<=\\])|(?=\\[))", Pattern.DOTALL);
@@ -46,7 +45,6 @@ class InteractiveChatOverlay extends Overlay {
 	InteractiveChatOverlay(Client client, InteractiveChatConfig config, EventBus eventBus) {
 		this.client = client;
 		this.config = config;
-		this.eventBus = eventBus;
 
 		eventBus.register(this);
 		setPosition(OverlayPosition.DYNAMIC);
