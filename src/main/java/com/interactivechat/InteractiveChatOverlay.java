@@ -72,7 +72,8 @@ class InteractiveChatOverlay extends Overlay {
 		final String text = Text.removeFormattingTags(message.getText());
 		final Rectangle messageBounds = message.getBounds();
 
-		int xForHitbox = message.getOriginalX();
+		final int xd = (int) messageBounds.getMinX() - message.getOriginalX();
+		final int yd = (int) messageBounds.getMinY() - message.getOriginalY();
 
 		Rectangle hoverBounds = new Rectangle((int) messageBounds.getMinX(), (int) messageBounds.getMinY() + 1, 0, messageBounds.height);
 		for (String part : SEARCH_PATTERN.split(text)) {
@@ -80,7 +81,7 @@ class InteractiveChatOverlay extends Overlay {
 			hoverBounds.width = partWidth;
 
 			if (hoverBounds.contains(mousePoint) && part.startsWith(LEFT_DELIMITER) && part.endsWith(RIGHT_DELIMITER)) {
-				setHitboxPosition(xForHitbox, message.getOriginalY() + 1, partWidth);
+				setHitboxPosition(hoverBounds.x - xd, hoverBounds.y - yd, hoverBounds.width);
 				search = part.replace(LEFT_DELIMITER, "").replace(RIGHT_DELIMITER, "");
 
 				final Rectangle underline = new Rectangle(hoverBounds.x + 2, hoverBounds.y + hoverBounds.height - 1,
@@ -90,7 +91,6 @@ class InteractiveChatOverlay extends Overlay {
 			}
 
 			hoverBounds.x += partWidth;
-			xForHitbox += partWidth;
 		}
 
 		return null;
