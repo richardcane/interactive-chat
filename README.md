@@ -1,1 +1,3 @@
 # Interactive Chat
+
+`make run`
