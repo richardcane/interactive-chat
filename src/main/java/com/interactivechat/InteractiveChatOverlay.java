@@ -53,6 +53,10 @@ class InteractiveChatOverlay extends Overlay {
 
 	@Override
 	public Dimension render(Graphics2D graphics) {
+		if (client.isMenuOpen()) {
+			return null;
+		}
+
 		if (hitboxWidget == null) {
 			createHitboxWidget();
 			if (hitboxWidget == null)
@@ -64,7 +68,7 @@ class InteractiveChatOverlay extends Overlay {
 		final Point mousePoint = new Point(mouse.getX(), mouse.getY());
 
 		Widget message = getChatMessageAtPoint(mousePoint);
-		if (client.isMenuOpen() || message == null) {
+		if (message == null) {
 			return null;
 		}
 
