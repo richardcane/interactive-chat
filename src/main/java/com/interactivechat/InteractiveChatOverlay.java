@@ -112,6 +112,8 @@ class InteractiveChatOverlay extends Overlay {
 						// hi fffffffffffffffffffffffffffffffffff [hitbox]
 						// where the spamming exceeds the widget width
 						if (currentWidth > 0) {
+							// if it's not the first word in the message
+							// then it'll get put on its own line
 							currentY += CHATLINE_HEIGHT;
 						}
 						currentY += CHATLINE_HEIGHT;
