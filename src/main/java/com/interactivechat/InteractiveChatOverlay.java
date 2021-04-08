@@ -1,10 +1,11 @@
 package com.interactivechat;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -29,26 +30,36 @@ import okhttp3.HttpUrl;
 
 class InteractiveChatOverlay extends Overlay {
 	private final Client client;
-	private final InteractiveChatConfig config;
 
 	static final HttpUrl WIKI_BASE = HttpUrl.parse("https://oldschool.runescape.wiki");
-	static final Pattern SEARCH_PATTERN = Pattern.compile("((?<=\\])|(?=\\[))", Pattern.DOTALL);
+	static final Pattern BRACKETED_PATTERN = Pattern.compile("((?<=\\])|(?=\\[))", Pattern.DOTALL);
+	static final String WITH_DELIMITER_REGEX = "((?<=%1$s)|(?=%1$s))";
 	static final String LEFT_DELIMITER = "[";
 	static final String RIGHT_DELIMITER = "]";
 	static final String HITBOX_WIDGET_NAME = "InteractiveChatHitbox";
 	static final int CHATLINE_MAX_WIDTH = 486;
+	static final int CHATLINE_HEIGHT = 14;
 
 	private Widget chatboxWidget;
 	private Widget hitboxWidget;
 	private String search = "";
 
 	@Inject
-	InteractiveChatOverlay(Client client, InteractiveChatConfig config, EventBus eventBus) {
+	InteractiveChatOverlay(Client client, EventBus eventBus) {
 		this.client = client;
-		this.config = config;
 
 		eventBus.register(this);
 		setPosition(OverlayPosition.DYNAMIC);
+	}
+	
+	@SuppressWarnings("serial")
+	class KeywordBoundary extends Rectangle {
+		final String term;
+
+		KeywordBoundary(String term, int x, int y, int width) {
+			super(x, y, width, CHATLINE_HEIGHT);
+			this.term = term;
+		}
 	}
 
 	@Override
@@ -62,11 +73,10 @@ class InteractiveChatOverlay extends Overlay {
 			if (hitboxWidget == null)
 				return null;
 		}
-		setHitboxPosition(0, 0, 0);
+		setHitboxBounds(0, 0, 0);
 
 		final net.runelite.api.Point mouse = client.getMouseCanvasPosition();
 		final Point mousePoint = new Point(mouse.getX(), mouse.getY());
-
 		Widget message = getChatMessageAtPoint(mousePoint);
 		if (message == null) {
 			return null;
@@ -75,26 +85,51 @@ class InteractiveChatOverlay extends Overlay {
 		final FontTypeFace font = message.getFont();
 		final String text = Text.removeFormattingTags(message.getText());
 		final Rectangle messageBounds = message.getBounds();
+		final int messageWidth = message.getWidth();
 
-		final int xd = (int) messageBounds.getMinX() - message.getOriginalX();
-		final int yd = (int) messageBounds.getMinY() - message.getOriginalY();
+		int currentWidth = 0;
+		int currentY = (int) messageBounds.getMinY();
 
-		Rectangle hoverBounds = new Rectangle((int) messageBounds.getMinX(), (int) messageBounds.getMinY() + 1, 0, messageBounds.height);
-		for (String part : SEARCH_PATTERN.split(text)) {
+		final int minX = (int) messageBounds.getMinX();
+		final int xd = minX - message.getOriginalX();
+		final int yd = currentY - message.getOriginalY();
+
+		final List<KeywordBoundary> boundaries = new ArrayList<KeywordBoundary>();
+
+		for (String part : BRACKETED_PATTERN.split(text)) {
+			final boolean isBracketedPart = part.startsWith(LEFT_DELIMITER) && part.endsWith(RIGHT_DELIMITER);
 			final int partWidth = font.getTextWidth(part);
-			hoverBounds.width = partWidth;
 
-			if (hoverBounds.contains(mousePoint) && part.startsWith(LEFT_DELIMITER) && part.endsWith(RIGHT_DELIMITER)) {
-				setHitboxPosition(hoverBounds.x - xd, hoverBounds.y - yd, hoverBounds.width);
-				search = part.replace(LEFT_DELIMITER, "").replace(RIGHT_DELIMITER, "");
+			if (currentWidth + partWidth > messageWidth) {
+				for (String word : part.split("(?=\\s+)")) {
+					final int wordWidth = font.getTextWidth(word);
+					if (currentWidth + wordWidth < messageWidth) {
+						currentWidth += wordWidth;
+						continue;
+					} else {
+						final int trimmedWidth = font.getTextWidth(word.trim());
+						currentWidth = trimmedWidth;
+						currentY += CHATLINE_HEIGHT;
+					}
+				}
+			} else if (isBracketedPart) {
+				String term = part.replace(LEFT_DELIMITER, "").replace(RIGHT_DELIMITER, "");
+				boundaries.add(new KeywordBoundary(term, minX + currentWidth, currentY, partWidth));
+				currentWidth += partWidth;
+			}
 
-				final Rectangle underline = new Rectangle(hoverBounds.x + 2, hoverBounds.y + hoverBounds.height - 1,
-						hoverBounds.width - 4, 1);
+		}
+		
+		for (KeywordBoundary bounds : boundaries) {
+			if (bounds.contains(mousePoint)) {
+				setHitboxBounds(bounds.x - xd, bounds.y - yd, bounds.width);
+				search = bounds.term;
+
+				final Rectangle underline = new Rectangle(bounds.x + 2, bounds.y + CHATLINE_HEIGHT,
+						bounds.width - 4, 1);
 				graphics.setPaint(InteractiveChatPlugin.LINK_COLOR);
 				graphics.fill(underline);
 			}
-
-			hoverBounds.x += partWidth;
 		}
 
 		return null;
@@ -132,7 +167,7 @@ class InteractiveChatOverlay extends Overlay {
 		hitboxWidget.revalidate();
 	}
 
-	private void setHitboxPosition(int x, int y, int width) {
+	private void setHitboxBounds(int x, int y, int width) {
 		if (hitboxWidget.getOriginalX() == x && hitboxWidget.getOriginalY() == y && hitboxWidget.getWidth() == width) {
 			return;
 		}
