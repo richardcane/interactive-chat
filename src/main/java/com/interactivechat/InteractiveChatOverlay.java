@@ -106,6 +106,12 @@ class InteractiveChatOverlay extends Overlay {
 					if (currentWidth + wordWidth < messageWidth) {
 						currentWidth += wordWidth;
 						continue;
+					} else if (wordWidth > messageWidth) {
+						if (currentWidth > 0) {
+							currentY += CHATLINE_HEIGHT;
+						}						
+						currentY += CHATLINE_HEIGHT;
+						currentWidth = 0;
 					} else {
 						final int trimmedWidth = font.getTextWidth(word.trim());
 						currentWidth = trimmedWidth;
