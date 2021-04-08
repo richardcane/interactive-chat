@@ -107,9 +107,13 @@ class InteractiveChatOverlay extends Overlay {
 						currentWidth += wordWidth;
 						continue;
 					} else if (wordWidth > messageWidth) {
+						// keeps hitbox positioning correct
+						// when people spam keys like
+						// hi fffffffffffffffffffffffffffffffffff [hitbox]
+						// where the spamming exceeds the widget width
 						if (currentWidth > 0) {
 							currentY += CHATLINE_HEIGHT;
-						}						
+						}
 						currentY += CHATLINE_HEIGHT;
 						currentWidth = 0;
 						break;
