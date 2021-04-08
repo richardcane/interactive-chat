@@ -116,8 +116,9 @@ class InteractiveChatOverlay extends Overlay {
 				String term = part.replace(LEFT_DELIMITER, "").replace(RIGHT_DELIMITER, "");
 				boundaries.add(new KeywordBoundary(term, minX + currentWidth, currentY, partWidth));
 				currentWidth += partWidth;
+			} else {
+				currentWidth += partWidth;
 			}
-
 		}
 		
 		for (KeywordBoundary bounds : boundaries) {
