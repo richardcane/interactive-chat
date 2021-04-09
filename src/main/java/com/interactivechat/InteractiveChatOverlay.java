@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
@@ -54,10 +55,12 @@ class InteractiveChatOverlay extends Overlay {
 	
 	@SuppressWarnings("serial")
 	class KeywordBoundary extends Rectangle {
+		final int index;
 		final String term;
 
-		KeywordBoundary(String term, int x, int y, int width) {
+		KeywordBoundary(int index, String term, int x, int y, int width) {
 			super(x, y, width, CHATLINE_HEIGHT);
+			this.index = index;
 			this.term = term;
 		}
 	}
@@ -87,23 +90,33 @@ class InteractiveChatOverlay extends Overlay {
 		final Rectangle messageBounds = message.getBounds();
 		final int messageWidth = message.getWidth();
 
+		int keywordIndex = 0;
 		int currentWidth = 0;
-		int currentY = (int) messageBounds.getMinY();
+		int currentY = (int) messageBounds.getMinY() + 4;
 
 		final int minX = (int) messageBounds.getMinX();
 		final int xd = minX - message.getOriginalX();
 		final int yd = currentY - message.getOriginalY();
 
-		final List<KeywordBoundary> boundaries = new ArrayList<KeywordBoundary>();
-
+		final List<KeywordBoundary> partBoundaries = new ArrayList<KeywordBoundary>();
 		for (String part : BRACKETED_PATTERN.split(text)) {
 			final boolean isBracketedPart = part.startsWith(LEFT_DELIMITER) && part.endsWith(RIGHT_DELIMITER);
 			final int partWidth = font.getTextWidth(part);
 
+			String term = "";
+			if (isBracketedPart) {
+				term = part.replace(LEFT_DELIMITER, "").replace(RIGHT_DELIMITER, "");
+				keywordIndex++;
+			}
+
 			if (currentWidth + partWidth > messageWidth) {
 				for (String word : part.split("(?=\\s+)")) {
 					final int wordWidth = font.getTextWidth(word);
-					if (currentWidth + wordWidth < messageWidth) {
+					if (currentWidth + wordWidth <= messageWidth) {
+						if (isBracketedPart) {
+							partBoundaries.add(new KeywordBoundary(keywordIndex, term, minX + currentWidth, currentY, wordWidth));
+						}
+						
 						currentWidth += wordWidth;
 						continue;
 					} else if (wordWidth > messageWidth) {
@@ -116,34 +129,68 @@ class InteractiveChatOverlay extends Overlay {
 							// then it'll get put on its own line
 							currentY += CHATLINE_HEIGHT;
 						}
+
+						if (isBracketedPart) {
+							partBoundaries.add(new KeywordBoundary(keywordIndex, term, minX + currentWidth, currentY, wordWidth));
+						}
+
 						currentY += CHATLINE_HEIGHT;
 						currentWidth = 0;
 						break;
 					} else {
 						final int trimmedWidth = font.getTextWidth(word.trim());
-						currentWidth = trimmedWidth;
 						currentY += CHATLINE_HEIGHT;
+						if (isBracketedPart) {
+							partBoundaries.add(new KeywordBoundary(keywordIndex, term, minX, currentY, trimmedWidth));
+						}
+						
+						currentWidth = trimmedWidth;
 					}
 				}
 			} else if (isBracketedPart) {
-				String term = part.replace(LEFT_DELIMITER, "").replace(RIGHT_DELIMITER, "");
-				boundaries.add(new KeywordBoundary(term, minX + currentWidth, currentY, partWidth));
+				partBoundaries.add(new KeywordBoundary(keywordIndex, term, minX + currentWidth, currentY, partWidth));
 				currentWidth += partWidth;
 			} else {
 				currentWidth += partWidth;
 			}
 		}
 		
-		for (KeywordBoundary bounds : boundaries) {
-			if (bounds.contains(mousePoint)) {
-				setHitboxBounds(bounds.x - xd, bounds.y - yd, bounds.width);
-				search = bounds.term;
-
-				final Rectangle underline = new Rectangle(bounds.x + 2, bounds.y + CHATLINE_HEIGHT,
-						bounds.width - 4, 1);
-				graphics.setPaint(InteractiveChatPlugin.LINK_COLOR);
-				graphics.fill(underline);
+		int hoveredKeywordIndex = 0;
+		for (KeywordBoundary bounds : partBoundaries) {
+			if (!bounds.contains(mousePoint)) {
+				continue;
 			}
+			setHitboxBounds(bounds.x - xd, bounds.y - yd + 1, bounds.width);
+			search = bounds.term;
+			hoveredKeywordIndex = bounds.index;
+		}
+
+		final int finalKeywordIndex = hoveredKeywordIndex;
+		List<KeywordBoundary> wordBoundaries = partBoundaries.stream()
+				.filter(bound -> bound.index == finalKeywordIndex)
+				.collect(Collectors.toList());
+
+		final int wordCount = wordBoundaries.size();
+		for (int i = 0; i < wordCount; i++) {
+			KeywordBoundary bounds = wordBoundaries.get(i);
+			
+			int width = bounds.width;
+			if (wordCount > 1) {
+				if (i == 0 || i == wordCount - 1) {
+					width -= 2;
+				}
+			} else {
+				width -= 4;
+			}
+
+			int x = bounds.x;
+			if (i == 0) {
+				x += 2;
+			}
+
+			final Rectangle underline = new Rectangle(x, bounds.y + CHATLINE_HEIGHT - 4, width, 1);			
+			graphics.setPaint(InteractiveChatPlugin.LINK_COLOR);
+			graphics.fill(underline);
 		}
 
 		return null;
@@ -172,7 +219,7 @@ class InteractiveChatOverlay extends Overlay {
 		hitboxWidget.setOriginalX(0);
 		hitboxWidget.setOriginalY(0);
 		hitboxWidget.setOriginalWidth(0);
-		hitboxWidget.setOriginalHeight(14);
+		hitboxWidget.setOriginalHeight(18);
 		hitboxWidget.setNoClickThrough(true);
 
 		hitboxWidget.setHasListener(true);
