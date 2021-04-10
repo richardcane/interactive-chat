@@ -9,5 +9,4 @@ nbactions.xml
 nb-configuration.xml
 nbproject/
 **.orig
-.vscode
 **.log
