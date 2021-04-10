@@ -4,7 +4,3 @@ This plugin allows players to send and recieve messages with interactive keyword
 
 #### Clickable links
 ![Clickable link demonstration](https://raw.githubusercontent.com/richardcane/interactive-chat/master/links.gif)
-
-## Sidenotes
-
-Use `make run` to compile and run a shadow JAR that includes the plugin.
