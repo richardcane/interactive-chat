@@ -1,7 +1,6 @@
 package com.interactivechat;
 
 import com.google.inject.Provides;
-import java.awt.Color;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
 import net.runelite.api.ChatMessageType;
@@ -22,7 +21,6 @@ public class InteractiveChatPlugin extends Plugin {
   static final Pattern SEARCH_PATTERN = Pattern.compile("((?<=\\])|(?=\\[))", Pattern.DOTALL);
   static final String LEFT_DELIMITER = "[";
   static final String RIGHT_DELIMITER = "]";
-  static final Color LINK_COLOR = new Color(85, 175, 251);
 
   @Inject private ChatMessageManager chatMessageManager;
 
@@ -74,7 +72,7 @@ public class InteractiveChatPlugin extends Plugin {
       }
 
       final String searchTerm = part.substring(1, part.length() - 1);
-      builder.append(LINK_COLOR, String.format("[%s]", searchTerm.trim().replaceAll(" +", " ")));
+      builder.append(config.itemColor(), String.format("[%s]", searchTerm.trim().replaceAll(" +", " ")));
     }
 
     final MessageNode messageNode = chatMessage.getMessageNode();

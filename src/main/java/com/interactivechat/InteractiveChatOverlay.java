@@ -30,6 +30,7 @@ import net.runelite.client.util.Text;
 import okhttp3.HttpUrl;
 
 class InteractiveChatOverlay extends Overlay {
+	private final InteractiveChatConfig config;
 	private final Client client;
 
 	static final HttpUrl WIKI_BASE = HttpUrl.parse("https://oldschool.runescape.wiki");
@@ -44,7 +45,8 @@ class InteractiveChatOverlay extends Overlay {
 	private String search = "";
 
 	@Inject
-	InteractiveChatOverlay(Client client, EventBus eventBus) {
+	InteractiveChatOverlay(InteractiveChatConfig config, Client client, EventBus eventBus) {
+		this.config = config;
 		this.client = client;
 
 		eventBus.register(this);
@@ -182,8 +184,9 @@ class InteractiveChatOverlay extends Overlay {
 			int width = wordCount > 1 && (i == 0 || i == wordCount - 1) 
 				? bounds.width - 2 : bounds.width - 4;
 
+			// -4 correction because of earlier repositioning
 			final Rectangle underline = new Rectangle(x, bounds.y + CHATLINE_HEIGHT - 4, width, 1);			
-			graphics.setPaint(InteractiveChatPlugin.LINK_COLOR);
+			graphics.setPaint(config.itemColor());
 			graphics.fill(underline);
 		}
 
