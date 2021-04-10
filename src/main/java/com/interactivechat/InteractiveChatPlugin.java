@@ -16,7 +16,10 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
 
-@PluginDescriptor(name = "Interactive Chat")
+@PluginDescriptor(
+    name = "Interactive Chat",
+    description = "Lets users send interactive chat messages",
+    tags = {"interactive", "chat", "wiki", "search"})
 public class InteractiveChatPlugin extends Plugin {
   static final Pattern SEARCH_PATTERN = Pattern.compile("((?<=\\])|(?=\\[))", Pattern.DOTALL);
   static final String LEFT_DELIMITER = "[";
@@ -72,7 +75,8 @@ public class InteractiveChatPlugin extends Plugin {
       }
 
       final String searchTerm = part.substring(1, part.length() - 1);
-      builder.append(config.itemColor(), String.format("[%s]", searchTerm.trim().replaceAll(" +", " ")));
+      builder.append(
+          config.itemColor(), String.format("[%s]", searchTerm.trim().replaceAll(" +", " ")));
     }
 
     final MessageNode messageNode = chatMessage.getMessageNode();
