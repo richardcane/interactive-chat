@@ -10,3 +10,4 @@ nb-configuration.xml
 nbproject/
 **.orig
 .vscode
+**.log
