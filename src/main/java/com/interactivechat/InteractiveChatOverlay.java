@@ -168,12 +168,19 @@ class InteractiveChatOverlay extends Overlay {
 			setHitboxBounds(boundary.x - xd, boundary.y - yd + 1, boundary.width);
 			search = boundary.term;
 
+			if (config.onHover() == HoverMode.OFF) {
+				break;
+			}
+
 			wordBoundaries = keywordBoundaries.stream()
 				.filter(keywordBoundary -> keywordBoundary.index == boundary.index)
 					.collect(Collectors.toList());
 			break;
 		}
 
+		if (config.onHover() == HoverMode.OFF) {
+			return null;
+		}
 
 		final int wordCount = wordBoundaries.size();
 		for (int i = 0; i < wordCount; i++) {
@@ -185,9 +192,17 @@ class InteractiveChatOverlay extends Overlay {
 				? bounds.width - 2 : bounds.width - 4;
 
 			// -4 correction because of earlier repositioning
-			final Rectangle underline = new Rectangle(x, bounds.y + CHATLINE_HEIGHT - 4, width, 1);			
+			final Rectangle hoverEffect = new Rectangle(x, bounds.y + CHATLINE_HEIGHT - 4, width, 1);
+
+			if (config.onHover() == HoverMode.HIGHLIGHT) {
+				hoverEffect.x = bounds.x;
+				hoverEffect.y = bounds.y - 3;
+				hoverEffect.height = CHATLINE_HEIGHT;
+				hoverEffect.width = bounds.width;
+			}
+
 			graphics.setPaint(config.itemColor());
-			graphics.fill(underline);
+			graphics.fill(hoverEffect);
 		}
 
 		return null;
