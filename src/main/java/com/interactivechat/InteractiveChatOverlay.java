@@ -81,11 +81,11 @@ class InteractiveChatOverlay extends Overlay {
 	}
 	
 	@SuppressWarnings("serial")
-	class SearchBound extends Rectangle {
+	class Match extends Rectangle {
 		final int index;
 		final String term;
 
-		SearchBound(int index, String term, int x, int y, int width) {
+		Match(int index, String term, int x, int y, int width) {
 			super(x, y, width, CHATLINE_HEIGHT);
 			this.index = index;
 			this.term = term;
@@ -99,7 +99,7 @@ class InteractiveChatOverlay extends Overlay {
 		}
 
 		if (hitboxWidget == null) {
-			createHitboxWidget();
+			initHitboxWidget();
 			if (hitboxWidget == null)
 				return null;
 		}
@@ -131,7 +131,7 @@ class InteractiveChatOverlay extends Overlay {
 		int searchIndex = 0;
 		int incrementedWidth = 0;
 		int incrementedY = minY;
-		final List<SearchBound> searches = new ArrayList<SearchBound>();
+		final List<Match> matches = new ArrayList<Match>();
 		
 		for (String part : BRACKETED_PATTERN.split(message)) {
 			final boolean bracketed = part.startsWith(LEFT_DELIMITER) && part.endsWith(RIGHT_DELIMITER);
@@ -148,7 +148,7 @@ class InteractiveChatOverlay extends Overlay {
 					final int wordWidth = font.getTextWidth(word);
 					if (incrementedWidth + wordWidth <= messageWidgetWidth) {
 						if (bracketed) {
-							searches.add(new SearchBound(searchIndex, term, minX + incrementedWidth, incrementedY, wordWidth));
+							matches.add(new Match(searchIndex, term, minX + incrementedWidth, incrementedY, wordWidth));
 						}
 						
 						incrementedWidth += wordWidth;
@@ -166,7 +166,7 @@ class InteractiveChatOverlay extends Overlay {
 						}
 
 						if (bracketed) {
-							searches.add(new SearchBound(searchIndex, term, minX + incrementedWidth, incrementedY, wordWidth));
+							matches.add(new Match(searchIndex, term, minX + incrementedWidth, incrementedY, wordWidth));
 						}
 
 						incrementedY += CHATLINE_HEIGHT;
@@ -179,12 +179,12 @@ class InteractiveChatOverlay extends Overlay {
 						incrementedWidth = trimmedWidth;
 
 						if (bracketed) {
-							searches.add(new SearchBound(searchIndex, term, minX, incrementedY, trimmedWidth));
+							matches.add(new Match(searchIndex, term, minX, incrementedY, trimmedWidth));
 						}
 					}
 				}
 			} else if (bracketed) {
-				searches.add(new SearchBound(searchIndex, term, minX + incrementedWidth, incrementedY, partWidth));
+				matches.add(new Match(searchIndex, term, minX + incrementedWidth, incrementedY, partWidth));
 				incrementedWidth += partWidth;
 			} else {
 				incrementedWidth += partWidth;
@@ -195,8 +195,8 @@ class InteractiveChatOverlay extends Overlay {
 		final int xd = minX - messageWidget.getOriginalX();
 		final int yd = minY - messageWidget.getOriginalY();
 
-		List<SearchBound> keywords = new ArrayList<SearchBound>();
-		for (SearchBound bounds : searches) {
+		List<Match> keywords = new ArrayList<Match>();
+		for (Match bounds : matches) {
 			if (!bounds.contains(mousePoint)) {
 				continue;
 			}
@@ -208,7 +208,7 @@ class InteractiveChatOverlay extends Overlay {
 				break;
 			}
 
-			keywords = searches.stream()
+			keywords = matches.stream()
 				.filter(keywordBounds -> keywordBounds.index == bounds.index)
 					.collect(Collectors.toList());
 			break;
@@ -220,7 +220,7 @@ class InteractiveChatOverlay extends Overlay {
 
 		final int wordCount = keywords.size();
 		for (int i = 0; i < wordCount; i++) {
-			SearchBound bounds = keywords.get(i);
+			Match bounds = keywords.get(i);
 			
 			// width and x modifications make it look nicer.
 			int x = i == 0 ? bounds.x + 2 : bounds.x;
@@ -256,7 +256,7 @@ class InteractiveChatOverlay extends Overlay {
 		}
 	}
 
-	private void createHitboxWidget() {
+	private void initHitboxWidget() {
 		chatboxWidget = getChatboxWidget();
 		if (chatboxWidget == null)
 			return;
@@ -296,8 +296,9 @@ class InteractiveChatOverlay extends Overlay {
 			return null;
 		}
 
-		Optional<Widget> maybeMessageWidget = Stream.of(chatboxWidget.getChildren()).filter(widget -> !widget.isHidden())
+		Optional<Widget> maybeMessageWidget = Stream.of(chatboxWidget.getChildren())
 				// 486 = chatbox width; ignores various game messages and parent chat lines
+				.filter(widget -> !widget.isHidden())
 				.filter(widget -> widget.getWidth() != 486) 
 				.filter(widget -> widget.getName() != HITBOX_WIDGET_NAME)
 				.filter(widget -> widget.getId() < WidgetInfo.CHATBOX_FIRST_MESSAGE.getId())
