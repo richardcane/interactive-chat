@@ -81,11 +81,11 @@ class InteractiveChatOverlay extends Overlay {
 	}
 	
 	@SuppressWarnings("serial")
-	class KeywordBoundary extends Rectangle {
+	class SearchBound extends Rectangle {
 		final int index;
 		final String term;
 
-		KeywordBoundary(int index, String term, int x, int y, int width) {
+		SearchBound(int index, String term, int x, int y, int width) {
 			super(x, y, width, CHATLINE_HEIGHT);
 			this.index = index;
 			this.term = term;
@@ -107,13 +107,20 @@ class InteractiveChatOverlay extends Overlay {
 
 		final net.runelite.api.Point mouse = client.getMouseCanvasPosition();
 		final Point mousePoint = new Point(mouse.getX(), mouse.getY());
-		Widget messageWidget = getChatMessageAtPoint(mousePoint);
+		Widget messageWidget = getHoveredChatMessageAtPoint(mousePoint);
 		if (messageWidget == null) {
 			return null;
 		}
 
-		final FontTypeFace font = messageWidget.getFont();
 		final String message = Text.removeFormattingTags(messageWidget.getText());
+		if (!message.contains(LEFT_DELIMITER)
+				|| !message.contains(RIGHT_DELIMITER) 
+				|| message.indexOf(RIGHT_DELIMITER) < message.indexOf(LEFT_DELIMITER))
+		{
+			return null;
+		}
+
+		final FontTypeFace font = messageWidget.getFont();
 		final Rectangle messageBounds = messageWidget.getBounds();
 		final int messageWidgetWidth = messageWidget.getWidth();
 
@@ -121,64 +128,66 @@ class InteractiveChatOverlay extends Overlay {
 		final int minY = (int) messageBounds.getMinY() + 4;
 		final int minX = (int) messageBounds.getMinX();
 		
-		int keywordIndex = 0;
-		int calculatedWidth = 0;
-		int currentY = minY;
-		final List<KeywordBoundary> keywordBoundaries = new ArrayList<KeywordBoundary>();
+		int searchIndex = 0;
+		int incrementedWidth = 0;
+		int incrementedY = minY;
+		final List<SearchBound> searches = new ArrayList<SearchBound>();
 		
 		for (String part : BRACKETED_PATTERN.split(message)) {
-			final boolean isBracketedPart = part.startsWith(LEFT_DELIMITER) && part.endsWith(RIGHT_DELIMITER);
+			final boolean bracketed = part.startsWith(LEFT_DELIMITER) && part.endsWith(RIGHT_DELIMITER);
 			final int partWidth = font.getTextWidth(part);
 
 			String term = "";
-			if (isBracketedPart) {
+			if (bracketed) {
 				term = part.replace(LEFT_DELIMITER, "").replace(RIGHT_DELIMITER, "");
-				keywordIndex++;
+				searchIndex++;
 			}
 
-			if (calculatedWidth + partWidth > messageWidgetWidth) {
+			if (incrementedWidth + partWidth > messageWidgetWidth) {
 				for (String word : part.split("(?=\\s+)")) {
 					final int wordWidth = font.getTextWidth(word);
-					if (calculatedWidth + wordWidth <= messageWidgetWidth) {
-						if (isBracketedPart) {
-							keywordBoundaries.add(new KeywordBoundary(keywordIndex, term, minX + calculatedWidth, currentY, wordWidth));
+					if (incrementedWidth + wordWidth <= messageWidgetWidth) {
+						if (bracketed) {
+							searches.add(new SearchBound(searchIndex, term, minX + incrementedWidth, incrementedY, wordWidth));
 						}
 						
-						calculatedWidth += wordWidth;
+						incrementedWidth += wordWidth;
 						continue;
 					} else if (wordWidth > messageWidgetWidth) {
 						// keeps hitbox positioning correct
 						// when people spam keys like
 						// hi fffffffffffffffffffffffffffffffffff [hitbox]
 						// where a single word exceeds the widget width
-						if (calculatedWidth > 0) {
-							// if it's not the first word in the message
-							// then it'll get put on its own line
-							currentY += CHATLINE_HEIGHT;
+
+						// if it's not the first word in the message
+						// then it'll get put on its own line
+						if (incrementedWidth > 0) {
+							incrementedY += CHATLINE_HEIGHT;
 						}
 
-						if (isBracketedPart) {
-							keywordBoundaries.add(new KeywordBoundary(keywordIndex, term, minX + calculatedWidth, currentY, wordWidth));
+						if (bracketed) {
+							searches.add(new SearchBound(searchIndex, term, minX + incrementedWidth, incrementedY, wordWidth));
 						}
 
-						currentY += CHATLINE_HEIGHT;
-						calculatedWidth = 0;
+						incrementedY += CHATLINE_HEIGHT;
+						incrementedWidth = 0;
 						break;
 					} else {
+						// new line, trim and reset incremented width
 						final int trimmedWidth = font.getTextWidth(word.trim());
-						currentY += CHATLINE_HEIGHT;
-						calculatedWidth = trimmedWidth;
+						incrementedY += CHATLINE_HEIGHT;
+						incrementedWidth = trimmedWidth;
 
-						if (isBracketedPart) {
-							keywordBoundaries.add(new KeywordBoundary(keywordIndex, term, minX, currentY, trimmedWidth));
+						if (bracketed) {
+							searches.add(new SearchBound(searchIndex, term, minX, incrementedY, trimmedWidth));
 						}
 					}
 				}
-			} else if (isBracketedPart) {
-				keywordBoundaries.add(new KeywordBoundary(keywordIndex, term, minX + calculatedWidth, currentY, partWidth));
-				calculatedWidth += partWidth;
+			} else if (bracketed) {
+				searches.add(new SearchBound(searchIndex, term, minX + incrementedWidth, incrementedY, partWidth));
+				incrementedWidth += partWidth;
 			} else {
-				calculatedWidth += partWidth;
+				incrementedWidth += partWidth;
 			}
 		}
 
@@ -186,21 +195,21 @@ class InteractiveChatOverlay extends Overlay {
 		final int xd = minX - messageWidget.getOriginalX();
 		final int yd = minY - messageWidget.getOriginalY();
 
-		List<KeywordBoundary> wordBoundaries = new ArrayList<KeywordBoundary>();
-		for (KeywordBoundary boundary : keywordBoundaries) {
-			if (!boundary.contains(mousePoint)) {
+		List<SearchBound> keywords = new ArrayList<SearchBound>();
+		for (SearchBound bounds : searches) {
+			if (!bounds.contains(mousePoint)) {
 				continue;
 			}
 			// +1 because hitbox needs to be very slightly lower than bounds
-			setHitboxBounds(boundary.x - xd, boundary.y - yd + 1, boundary.width);
-			search = boundary.term;
+			setHitboxBounds(bounds.x - xd, bounds.y - yd + 1, bounds.width);
+			search = bounds.term;
 
 			if (config.onHover() == HoverMode.OFF) {
 				break;
 			}
 
-			wordBoundaries = keywordBoundaries.stream()
-				.filter(keywordBoundary -> keywordBoundary.index == boundary.index)
+			keywords = searches.stream()
+				.filter(keywordBounds -> keywordBounds.index == bounds.index)
 					.collect(Collectors.toList());
 			break;
 		}
@@ -209,9 +218,9 @@ class InteractiveChatOverlay extends Overlay {
 			return null;
 		}
 
-		final int wordCount = wordBoundaries.size();
+		final int wordCount = keywords.size();
 		for (int i = 0; i < wordCount; i++) {
-			KeywordBoundary bounds = wordBoundaries.get(i);
+			SearchBound bounds = keywords.get(i);
 			
 			// width and x modifications make it look nicer.
 			int x = i == 0 ? bounds.x + 2 : bounds.x;
@@ -281,7 +290,7 @@ class InteractiveChatOverlay extends Overlay {
 		hitboxWidget.revalidate();
 	}
 
-	private Widget getChatMessageAtPoint(Point point) {
+	private Widget getHoveredChatMessageAtPoint(Point point) {
 		chatboxWidget = getChatboxWidget();
 		if (chatboxWidget == null || !chatboxWidget.getBounds().contains(point)) {
 			return null;
