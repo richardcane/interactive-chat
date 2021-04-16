@@ -113,10 +113,8 @@ class InteractiveChatOverlay extends Overlay {
 		}
 
 		final String message = Text.removeFormattingTags(messageWidget.getText());
-		if (!message.contains(LEFT_DELIMITER)
-				|| !message.contains(RIGHT_DELIMITER) 
-				|| message.indexOf(RIGHT_DELIMITER) < message.indexOf(LEFT_DELIMITER))
-		{
+		final String[] messageParts = BRACKETED_PATTERN.split(message);
+		if (messageParts.length == 1 && !message.startsWith(LEFT_DELIMITER)) {
 			return null;
 		}
 
@@ -133,7 +131,7 @@ class InteractiveChatOverlay extends Overlay {
 		int incrementedY = minY;
 		final List<Match> matches = new ArrayList<Match>();
 		
-		for (String part : BRACKETED_PATTERN.split(message)) {
+		for (String part : messageParts) {
 			final boolean bracketed = part.startsWith(LEFT_DELIMITER) && part.endsWith(RIGHT_DELIMITER);
 			final int partWidth = font.getTextWidth(part);
 
