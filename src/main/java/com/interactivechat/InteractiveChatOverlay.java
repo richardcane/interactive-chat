@@ -54,7 +54,9 @@ import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.util.LinkBrowser;
 import net.runelite.client.util.Text;
+
 import okhttp3.HttpUrl;
+import org.apache.commons.lang3.ArrayUtils;
 
 class InteractiveChatOverlay extends Overlay {
 	private final InteractiveChatConfig config;
@@ -67,7 +69,7 @@ class InteractiveChatOverlay extends Overlay {
 	static final String HITBOX_WIDGET_NAME = "InteractiveChatHitbox";
 	static final int CHATLINE_HEIGHT = 14;
 
-	private Widget chatboxWidget;
+	private Widget messageLinesWidget;
 	private Widget hitboxWidget;
 	private String search = "";
 
@@ -246,7 +248,7 @@ class InteractiveChatOverlay extends Overlay {
 	public void onGameStateChanged(GameStateChanged event) {
 		switch (event.getGameState()) {
 		case LOGGING_IN:
-			chatboxWidget = null;
+			messageLinesWidget = null;
 			hitboxWidget = null;
 			break;
 		default:
@@ -254,12 +256,29 @@ class InteractiveChatOverlay extends Overlay {
 		}
 	}
 
-	private void initHitboxWidget() {
-		chatboxWidget = getChatboxWidget();
-		if (chatboxWidget == null)
+	public void destroy() {
+		messageLinesWidget = getMessageLinesWidget();
+		if (messageLinesWidget == null) {
 			return;
+		}
 
-		hitboxWidget = chatboxWidget.createChild(-1, WidgetType.RECTANGLE);
+		Widget[] children = messageLinesWidget.getChildren();
+		int index = ArrayUtils.indexOf(children, hitboxWidget);
+		if (index != ArrayUtils.INDEX_NOT_FOUND) {
+			children[index] = null;
+		}
+
+		hitboxWidget = null;
+		messageLinesWidget = null;
+	}
+
+	private void initHitboxWidget() {
+		messageLinesWidget = getMessageLinesWidget();
+		if (messageLinesWidget == null) {
+			return;
+		}
+
+		hitboxWidget = messageLinesWidget.createChild(-1, WidgetType.RECTANGLE);
 		hitboxWidget.setName(HITBOX_WIDGET_NAME);
 		hitboxWidget.setOpacity(255);
 		hitboxWidget.setOriginalX(0);
@@ -289,12 +308,12 @@ class InteractiveChatOverlay extends Overlay {
 	}
 
 	private Widget getHoveredChatMessageAtPoint(Point point) {
-		chatboxWidget = getChatboxWidget();
-		if (chatboxWidget == null || !chatboxWidget.getBounds().contains(point)) {
+		messageLinesWidget = getMessageLinesWidget();
+		if (messageLinesWidget == null || !messageLinesWidget.getBounds().contains(point)) {
 			return null;
 		}
 
-		Optional<Widget> maybeMessageWidget = Stream.of(chatboxWidget.getChildren())
+		Optional<Widget> maybeMessageWidget = Stream.of(messageLinesWidget.getChildren())
 				// 486 = chatbox width; ignores various game messages and parent chat lines
 				.filter(widget -> !widget.isHidden())
 				.filter(widget -> widget.getWidth() != 486) 
@@ -309,9 +328,9 @@ class InteractiveChatOverlay extends Overlay {
 		return maybeMessageWidget.get();
 	}
 
-	private Widget getChatboxWidget() {
-		if (chatboxWidget != null) {
-			return chatboxWidget;
+	private Widget getMessageLinesWidget() {
+		if (messageLinesWidget != null) {
+			return messageLinesWidget;
 		}
 
 		return client.getWidget(WidgetInfo.CHATBOX_MESSAGE_LINES);
@@ -325,5 +344,4 @@ class InteractiveChatOverlay extends Overlay {
 						.toString()
 		);
 	}
-
 }

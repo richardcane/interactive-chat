@@ -75,6 +75,7 @@ public class InteractiveChatPlugin extends Plugin {
 
   @Override
   protected void shutDown() throws Exception {
+    overlay.destroy();
     overlayManager.remove(overlay);
   }
 
