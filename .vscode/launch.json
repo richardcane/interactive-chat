@@ -11,7 +11,7 @@
       "mainClass": "com.interactivechat.InteractiveChatTest",
       "projectName": "interactivechat",
       "args": "--debug --developer-mode",
-      "vmArgs": "-ea"
+      "vmArgs": "-ea -Drunelite.pluginhub.version=0"
     }
   ]
 }
