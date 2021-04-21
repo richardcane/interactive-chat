@@ -248,6 +248,7 @@ class InteractiveChatOverlay extends Overlay {
 	public void onGameStateChanged(GameStateChanged event) {
 		switch (event.getGameState()) {
 		case LOGGING_IN:
+		case HOPPING:
 			messageLinesWidget = null;
 			hitboxWidget = null;
 			break;
