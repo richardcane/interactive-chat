@@ -88,7 +88,7 @@ class InteractiveChatOverlay extends Overlay {
 		final String term;
 
 		Match(int index, String term, int x, int y, int width) {
-			super(x, y, width, CHATLINE_HEIGHT);
+			super(x, y, width, CHATLINE_HEIGHT + 2);
 			this.index = index;
 			this.term = term;
 		}
@@ -228,7 +228,7 @@ class InteractiveChatOverlay extends Overlay {
 				? bounds.width - 2 : bounds.width - 4;
 
 			// -4 correction because of earlier repositioning
-			final Rectangle hoverEffect = new Rectangle(x, bounds.y + CHATLINE_HEIGHT - 4, width, 1);
+			final Rectangle hoverEffect = new Rectangle(x, bounds.y + CHATLINE_HEIGHT - 4, width + 1, 1);
 
 			if (config.onHover() == HoverMode.HIGHLIGHT) {
 				hoverEffect.x = bounds.x;
