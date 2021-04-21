@@ -43,13 +43,14 @@ import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.util.Text;
 
 @PluginDescriptor(
     name = "Interactive Chat",
     description = "Lets users send interactive chat messages",
     tags = {"interactive", "chat", "wiki", "search"})
 public class InteractiveChatPlugin extends Plugin {
-  static final Pattern SEARCH_PATTERN = Pattern.compile("((?<=\\])|(?=\\[))", Pattern.DOTALL);
+  static final Pattern BRACKETED_PATTERN = Pattern.compile("((?<=\\])|(?=\\[))", Pattern.DOTALL);
   static final String LEFT_DELIMITER = "[";
   static final String RIGHT_DELIMITER = "]";
 
@@ -93,10 +94,15 @@ public class InteractiveChatPlugin extends Plugin {
       default:
         return;
     }
-    ;
+
+    final String message = Text.removeFormattingTags(chatMessage.getMessage());
+    final String[] parts = BRACKETED_PATTERN.split(message);
+    if (parts.length == 1 && !message.startsWith(LEFT_DELIMITER)) {
+      return;
+    }
 
     ChatMessageBuilder builder = new ChatMessageBuilder();
-    for (String part : SEARCH_PATTERN.split(chatMessage.getMessage())) {
+    for (String part : parts) {
       if (!part.startsWith(LEFT_DELIMITER) || !part.endsWith(RIGHT_DELIMITER)) {
         builder.append(ChatColorType.NORMAL);
         builder.append(part);
@@ -107,8 +113,9 @@ public class InteractiveChatPlugin extends Plugin {
       builder.append(config.itemColor(), String.format("[%s]", searchTerm.trim().replaceAll(" +", " ")));
     }
 
+    final String finalMessage = builder.build().replaceAll("<lt>", "<").replaceAll("<gt>", ">");
     final MessageNode messageNode = chatMessage.getMessageNode();
-    messageNode.setRuneLiteFormatMessage(builder.build());
+    messageNode.setRuneLiteFormatMessage(finalMessage);
     chatMessageManager.update(messageNode);
     client.refreshChat();
   }
