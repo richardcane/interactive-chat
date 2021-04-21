@@ -228,13 +228,13 @@ class InteractiveChatOverlay extends Overlay {
 				? bounds.width - 2 : bounds.width - 4;
 
 			// -4 correction because of earlier repositioning
-			final Rectangle hoverEffect = new Rectangle(x, bounds.y + CHATLINE_HEIGHT - 4, width + 1, 1);
+			final Rectangle hoverEffect = new Rectangle(x, bounds.y + CHATLINE_HEIGHT - 4, width, 1);
 
 			if (config.onHover() == HoverMode.HIGHLIGHT) {
 				hoverEffect.x = bounds.x;
 				hoverEffect.y = bounds.y - 3;
 				hoverEffect.height = CHATLINE_HEIGHT;
-				hoverEffect.width = bounds.width;
+				hoverEffect.width = bounds.width + 1;
 			}
 
 			graphics.setPaint(config.itemColor());
