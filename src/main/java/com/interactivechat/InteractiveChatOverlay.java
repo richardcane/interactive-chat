@@ -82,8 +82,7 @@ class InteractiveChatOverlay extends Overlay {
 		setPosition(OverlayPosition.DYNAMIC);
 	}
 	
-	@SuppressWarnings("serial")
-	class Match extends Rectangle {
+	private static class Match extends Rectangle {
 		final int index;
 		final String term;
 
