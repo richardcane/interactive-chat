@@ -68,8 +68,11 @@ class InteractiveChatOverlay extends Overlay {
 	static final String RIGHT_DELIMITER = "]";
 	static final String HITBOX_WIDGET_NAME = "InteractiveChatHitbox";
 	static final int CHATLINE_HEIGHT = 14;
+	static final int VARPLAYER_ENABLE_SPLIT_CHAT = 287;
+	static final int VARBIT_HIDE_SPLIT_CHAT = 4089;
 
 	private Widget messageLinesWidget;
+	private Widget splitChatWidget;
 	private Widget hitboxWidget;
 	private String search = "";
 
@@ -81,13 +84,13 @@ class InteractiveChatOverlay extends Overlay {
 		eventBus.register(this);
 		setPosition(OverlayPosition.DYNAMIC);
 	}
-	
+
 	private static class Match extends Rectangle {
 		final int index;
 		final String term;
 
 		Match(int index, String term, int x, int y, int width) {
-			super(x, y, width, CHATLINE_HEIGHT + 2);
+			super(x, y + 4, width, CHATLINE_HEIGHT);
 			this.index = index;
 			this.term = term;
 		}
@@ -95,6 +98,8 @@ class InteractiveChatOverlay extends Overlay {
 
 	@Override
 	public Dimension render(Graphics2D graphics) {
+		final net.runelite.api.Point mouse = client.getMouseCanvasPosition();
+		final Point mousePoint = new Point(mouse.getX(), mouse.getY());
 		if (client.isMenuOpen()) {
 			return null;
 		}
@@ -106,9 +111,7 @@ class InteractiveChatOverlay extends Overlay {
 		}
 		setHitboxBounds(0, 0, 0);
 
-		final net.runelite.api.Point mouse = client.getMouseCanvasPosition();
-		final Point mousePoint = new Point(mouse.getX(), mouse.getY());
-		Widget messageWidget = getHoveredChatMessageAtPoint(mousePoint);
+		Widget messageWidget = getMessageWidgetAtPoint(mousePoint);
 		if (messageWidget == null) {
 			return null;
 		}
@@ -123,15 +126,14 @@ class InteractiveChatOverlay extends Overlay {
 		final Rectangle messageBounds = messageWidget.getBounds();
 		final int messageWidgetWidth = messageWidget.getWidth();
 
-		// +4 results in better final position
-		final int minY = (int) messageBounds.getMinY() + 4;
+		final int minY = (int) messageBounds.getMinY();
 		final int minX = (int) messageBounds.getMinX();
-		
+
 		int searchIndex = 0;
 		int incrementedWidth = 0;
 		int incrementedY = minY;
 		final List<Match> matches = new ArrayList<Match>();
-		
+
 		for (String part : messageParts) {
 			final boolean bracketed = part.startsWith(LEFT_DELIMITER) && part.endsWith(RIGHT_DELIMITER);
 			final int partWidth = font.getTextWidth(part);
@@ -149,7 +151,7 @@ class InteractiveChatOverlay extends Overlay {
 						if (bracketed) {
 							matches.add(new Match(searchIndex, term, minX + incrementedWidth, incrementedY, wordWidth));
 						}
-						
+
 						incrementedWidth += wordWidth;
 						continue;
 					} else if (wordWidth > messageWidgetWidth) {
@@ -190,25 +192,20 @@ class InteractiveChatOverlay extends Overlay {
 			}
 		}
 
-		// positioning deltas
-		final int xd = minX - messageWidget.getOriginalX();
-		final int yd = minY - messageWidget.getOriginalY();
-
 		List<Match> keywords = new ArrayList<Match>();
 		for (Match bounds : matches) {
 			if (!bounds.contains(mousePoint)) {
 				continue;
 			}
-			// +1 because hitbox needs to be very slightly lower than bounds
-			setHitboxBounds(bounds.x - xd, bounds.y - yd + 1, bounds.width);
+			
+			setHitboxBounds(bounds.x, bounds.y - 4, bounds.width + 1);
 			search = bounds.term;
 
 			if (config.onHover() == HoverMode.OFF) {
 				break;
 			}
 
-			keywords = matches.stream()
-				.filter(keywordBounds -> keywordBounds.index == bounds.index)
+			keywords = matches.stream().filter(keywordBounds -> keywordBounds.index == bounds.index)
 					.collect(Collectors.toList());
 			break;
 		}
@@ -220,11 +217,10 @@ class InteractiveChatOverlay extends Overlay {
 		final int wordCount = keywords.size();
 		for (int i = 0; i < wordCount; i++) {
 			Match bounds = keywords.get(i);
-			
+
 			// width and x modifications make it look nicer.
 			int x = i == 0 ? bounds.x + 2 : bounds.x;
-			int width = wordCount > 1 && (i == 0 || i == wordCount - 1) 
-				? bounds.width - 2 : bounds.width - 4;
+			int width = wordCount > 1 && (i == 0 || i == wordCount - 1) ? bounds.width - 2 : bounds.width - 4;
 
 			// -4 correction because of earlier repositioning
 			final Rectangle hoverEffect = new Rectangle(x, bounds.y + CHATLINE_HEIGHT - 4, width, 1);
@@ -248,8 +244,7 @@ class InteractiveChatOverlay extends Overlay {
 		switch (event.getGameState()) {
 		case LOGGING_IN:
 		case HOPPING:
-			messageLinesWidget = null;
-			hitboxWidget = null;
+			destroy();
 			break;
 		default:
 			break;
@@ -257,12 +252,12 @@ class InteractiveChatOverlay extends Overlay {
 	}
 
 	public void destroy() {
-		messageLinesWidget = getMessageLinesWidget();
-		if (messageLinesWidget == null) {
+		splitChatWidget = getSplitChatWidget();
+		if (splitChatWidget == null) {
 			return;
 		}
 
-		Widget[] children = messageLinesWidget.getChildren();
+		Widget[] children = splitChatWidget.getChildren();
 		int index = ArrayUtils.indexOf(children, hitboxWidget);
 		if (index != ArrayUtils.INDEX_NOT_FOUND) {
 			children[index] = null;
@@ -270,21 +265,22 @@ class InteractiveChatOverlay extends Overlay {
 
 		hitboxWidget = null;
 		messageLinesWidget = null;
+		splitChatWidget = null;
 	}
 
 	private void initHitboxWidget() {
-		messageLinesWidget = getMessageLinesWidget();
-		if (messageLinesWidget == null) {
+		splitChatWidget = getSplitChatWidget();
+		if (splitChatWidget == null) {
 			return;
 		}
 
-		hitboxWidget = messageLinesWidget.createChild(-1, WidgetType.RECTANGLE);
+		hitboxWidget = splitChatWidget.createChild(-1, WidgetType.RECTANGLE);
 		hitboxWidget.setName(HITBOX_WIDGET_NAME);
 		hitboxWidget.setOpacity(255);
 		hitboxWidget.setOriginalX(0);
 		hitboxWidget.setOriginalY(0);
 		hitboxWidget.setOriginalWidth(0);
-		hitboxWidget.setOriginalHeight(18);
+		hitboxWidget.setOriginalHeight(CHATLINE_HEIGHT + 2);
 		hitboxWidget.setNoClickThrough(true);
 
 		hitboxWidget.setHasListener(true);
@@ -294,9 +290,7 @@ class InteractiveChatOverlay extends Overlay {
 	}
 
 	private void setHitboxBounds(int x, int y, int width) {
-		if (hitboxWidget.getOriginalX() == x 
-				&& hitboxWidget.getOriginalY() == y 
-				&& hitboxWidget.getWidth() == width) {
+		if (hitboxWidget.getOriginalX() == x && hitboxWidget.getOriginalY() == y && hitboxWidget.getWidth() == width) {
 			return;
 		}
 
@@ -307,25 +301,39 @@ class InteractiveChatOverlay extends Overlay {
 		hitboxWidget.revalidate();
 	}
 
-	private Widget getHoveredChatMessageAtPoint(Point point) {
+	private Widget getMessageWidgetAtPoint(Point point) {
 		messageLinesWidget = getMessageLinesWidget();
-		if (messageLinesWidget == null || !messageLinesWidget.getBounds().contains(point)) {
+
+		// TODO: chatbox hidden or not
+		if (messageLinesWidget != null && messageLinesWidget.getBounds().contains(point)) {
+			Optional<Widget> maybeMessageWidget = Stream.of(messageLinesWidget.getChildren())
+					// 486 = chatbox width; ignores various game messages and parent chat lines
+					.filter(widget -> !widget.isHidden()).filter(widget -> widget.getWidth() != 486)
+					.filter(widget -> widget.getId() < WidgetInfo.CHATBOX_FIRST_MESSAGE.getId())
+					.filter(widget -> widget.getBounds().contains(point)).findFirst();
+
+			if (!maybeMessageWidget.isPresent()) {
+				return null;
+			}
+			return maybeMessageWidget.get();
+		}
+		
+		boolean splitChatEnabled = client.getVarpValue(VARPLAYER_ENABLE_SPLIT_CHAT) > 0;
+		boolean splitChatHidden = client.getVarbitValue(VARBIT_HIDE_SPLIT_CHAT) > 0;
+		if (!splitChatEnabled || splitChatHidden) {
 			return null;
 		}
+		
+		splitChatWidget = getSplitChatWidget();
+		Optional<Widget> maybeSplitMessageWidget = Stream.of(splitChatWidget.getChildren())
+			// 519 = split chat widget width
+			.filter(widget -> widget.getWidth() != 519)
+			.filter(widget -> widget.getBounds().contains(point)).findFirst();
 
-		Optional<Widget> maybeMessageWidget = Stream.of(messageLinesWidget.getChildren())
-				// 486 = chatbox width; ignores various game messages and parent chat lines
-				.filter(widget -> !widget.isHidden())
-				.filter(widget -> widget.getWidth() != 486) 
-				.filter(widget -> widget.getName() != HITBOX_WIDGET_NAME)
-				.filter(widget -> widget.getId() < WidgetInfo.CHATBOX_FIRST_MESSAGE.getId())
-				.filter(widget -> widget.getBounds().contains(point))
-				.findFirst();
-
-		if (!maybeMessageWidget.isPresent()) {
+		if (!maybeSplitMessageWidget.isPresent()) {
 			return null;
 		}
-		return maybeMessageWidget.get();
+		return maybeSplitMessageWidget.get();
 	}
 
 	private Widget getMessageLinesWidget() {
@@ -336,12 +344,20 @@ class InteractiveChatOverlay extends Overlay {
 		return client.getWidget(WidgetInfo.CHATBOX_MESSAGE_LINES);
 	}
 
+	private Widget getSplitChatWidget() {
+		if (splitChatWidget != null) {
+			return splitChatWidget;
+		}
+
+		return client.getWidget(WidgetInfo.PRIVATE_CHAT_MESSAGE);
+	}
+
 	private void search(ScriptEvent ev) {
-		LinkBrowser.browse(
-				WIKI_BASE.newBuilder()
-						.addQueryParameter("search", search)
-						.build()
-						.toString()
-		);
+		LinkBrowser.browse(WIKI_BASE.newBuilder().addQueryParameter("search", search).build().toString());
+		setHitboxBounds(0, 0, 0);
 	}
 }
+
+
+// varplayer 287 split chat
+// varbit 4089 split chat hidden
