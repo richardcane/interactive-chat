@@ -311,7 +311,7 @@ class InteractiveChatOverlay extends Overlay {
 					.filter(widget -> {
 						// hitboxes don't extend to the bottom otherwise
 						Rectangle bounds = widget.getBounds();
-						bounds.height += 5;
+						bounds.height += 2;
 
 						return bounds.contains(point);
 					}).findFirst();
