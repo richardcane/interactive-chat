@@ -303,14 +303,18 @@ class InteractiveChatOverlay extends Overlay {
 
 	private Widget getMessageWidgetAtPoint(Point point) {
 		messageLinesWidget = getMessageLinesWidget();
-
-		// TODO: chatbox hidden or not
 		if (messageLinesWidget != null && messageLinesWidget.getBounds().contains(point)) {
 			Optional<Widget> maybeMessageWidget = Stream.of(messageLinesWidget.getChildren())
 					// 486 = chatbox width; ignores various game messages and parent chat lines
 					.filter(widget -> !widget.isHidden()).filter(widget -> widget.getWidth() != 486)
 					.filter(widget -> widget.getId() < WidgetInfo.CHATBOX_FIRST_MESSAGE.getId())
-					.filter(widget -> widget.getBounds().contains(point)).findFirst();
+					.filter(widget -> {
+						// hitboxes don't extend to the bottom otherwise
+						Rectangle bounds = widget.getBounds();
+						bounds.height += 5;
+
+						return bounds.contains(point);
+					}).findFirst();
 
 			if (!maybeMessageWidget.isPresent()) {
 				return null;
@@ -328,7 +332,13 @@ class InteractiveChatOverlay extends Overlay {
 		Optional<Widget> maybeSplitMessageWidget = Stream.of(splitChatWidget.getChildren())
 			// 519 = split chat widget width
 			.filter(widget -> widget.getWidth() != 519)
-			.filter(widget -> widget.getBounds().contains(point)).findFirst();
+			.filter(widget -> {
+				// same as above				
+				Rectangle bounds = widget.getBounds();
+				bounds.y += 2;
+
+				return bounds.contains(point);
+			}).findFirst();
 
 		if (!maybeSplitMessageWidget.isPresent()) {
 			return null;
@@ -354,7 +364,6 @@ class InteractiveChatOverlay extends Overlay {
 
 	private void search(ScriptEvent ev) {
 		LinkBrowser.browse(WIKI_BASE.newBuilder().addQueryParameter("search", search).build().toString());
-		setHitboxBounds(0, 0, 0);
 	}
 }
 
