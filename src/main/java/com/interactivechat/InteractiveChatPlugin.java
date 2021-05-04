@@ -50,9 +50,9 @@ import net.runelite.client.util.Text;
     description = "Lets users send interactive chat messages",
     tags = {"interactive", "chat", "wiki", "search"})
 public class InteractiveChatPlugin extends Plugin {
-  static final Pattern BRACKETED_PATTERN = Pattern.compile("((?<=\\])|(?=\\[))", Pattern.DOTALL);
-  static final String LEFT_DELIMITER = "[";
-  static final String RIGHT_DELIMITER = "]";
+  static final Pattern BRACKETED_PATTERN = InteractiveChat.BRACKETED_PATTERN;
+  static final String LEFT_DELIMITER = InteractiveChat.LEFT_DELIMITER;
+  static final String RIGHT_DELIMITER = InteractiveChat.RIGHT_DELIMITER;
 
   @Inject private ChatMessageManager chatMessageManager;
 

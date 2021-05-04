@@ -27,31 +27,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.interactivechat;
 
-import java.awt.Color;
+import java.awt.Rectangle;
 
-import net.runelite.client.config.Alpha;
-import net.runelite.client.config.Config;
-import net.runelite.client.config.ConfigGroup;
-import net.runelite.client.config.ConfigItem;
+public class Match extends Rectangle {
+		final int index;
+		final String term;
 
-@ConfigGroup("interactivechat")
-public interface InteractiveChatConfig extends Config {
-  @Alpha
-  @ConfigItem(
-      keyName = "itemColor",
-      name = "Item color",
-      description = "The color of interactive chat items"
-  )
-  default Color itemColor() {
-    return new Color(85, 175, 251);
-  }
-
-  @ConfigItem(
-    keyName = "onHover",
-    name = "On hover",
-    description = "What the plugin should do when you hover over a keyword"
-  )
-  default HoverMode onHover() {
-    return HoverMode.UNDERLINE;
-  }
-}
+		Match(int index, String term, int x, int y, int width) {
+			super(x, y + 4, width, InteractiveChat.CHATLINE_HEIGHT);
+			this.index = index;
+			this.term = term;
+		}
+	}

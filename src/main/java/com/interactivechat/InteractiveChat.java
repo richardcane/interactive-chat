@@ -25,33 +25,14 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
+
 package com.interactivechat;
 
-import java.awt.Color;
+import java.util.regex.Pattern;
 
-import net.runelite.client.config.Alpha;
-import net.runelite.client.config.Config;
-import net.runelite.client.config.ConfigGroup;
-import net.runelite.client.config.ConfigItem;
-
-@ConfigGroup("interactivechat")
-public interface InteractiveChatConfig extends Config {
-  @Alpha
-  @ConfigItem(
-      keyName = "itemColor",
-      name = "Item color",
-      description = "The color of interactive chat items"
-  )
-  default Color itemColor() {
-    return new Color(85, 175, 251);
-  }
-
-  @ConfigItem(
-    keyName = "onHover",
-    name = "On hover",
-    description = "What the plugin should do when you hover over a keyword"
-  )
-  default HoverMode onHover() {
-    return HoverMode.UNDERLINE;
-  }
+class InteractiveChat {
+  static final Pattern BRACKETED_PATTERN = Pattern.compile("((?<=\\])|(?=\\[))", Pattern.DOTALL);
+  static final String LEFT_DELIMITER = "[";
+  static final String RIGHT_DELIMITER = "]";
+	static final int CHATLINE_HEIGHT = 14;
 }
