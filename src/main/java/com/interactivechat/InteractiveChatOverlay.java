@@ -43,11 +43,13 @@ import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.FontTypeFace;
 import net.runelite.api.ScriptEvent;
+import net.runelite.api.Varbits;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.input.MouseManager;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
@@ -60,13 +62,12 @@ class InteractiveChatOverlay extends Overlay {
 	private final InteractiveChatConfig config;
 	private final Client client;
 
-	static final HttpUrl WIKI_BASE = HttpUrl.parse("https://oldschool.runescape.wiki");
-	
 	static final Pattern BRACKETED_PATTERN = InteractiveChat.BRACKETED_PATTERN;
 	static final String LEFT_DELIMITER = InteractiveChat.LEFT_DELIMITER;
 	static final String RIGHT_DELIMITER = InteractiveChat.RIGHT_DELIMITER;
 	static final int CHATLINE_HEIGHT = InteractiveChat.CHATLINE_HEIGHT;
-
+	
+	static final HttpUrl WIKI_BASE = HttpUrl.parse("https://oldschool.runescape.wiki");
 	static final int VARPLAYER_ENABLE_SPLIT_CHAT = 287;
 	static final int VARBIT_HIDE_SPLIT_CHAT = 4089;
 
@@ -74,13 +75,15 @@ class InteractiveChatOverlay extends Overlay {
 	private Widget splitChatWidget;
 
 	@Inject
-	InteractiveChatOverlay(InteractiveChatConfig config, Client client, EventBus eventBus) {
+	InteractiveChatOverlay(InteractiveChatConfig config, Client client, EventBus eventBus, MouseManager mouseManager, InteractiveChatMouseAdapter interactiveChatMouseAdapter) {
+		setPosition(OverlayPosition.DYNAMIC);
+		setLayer(OverlayLayer.ALWAYS_ON_TOP);
+
 		this.config = config;
 		this.client = client;
 
 		eventBus.register(this);
-		setPosition(OverlayPosition.DYNAMIC);
-		setLayer(OverlayLayer.ABOVE_WIDGETS);
+		mouseManager.registerMouseListener(interactiveChatMouseAdapter);
 	}
 
 	@Override
@@ -103,47 +106,21 @@ class InteractiveChatOverlay extends Overlay {
 		}
 
 		List<Match> matches = getMatches(messageWidget, messageParts);
+		if (config.onHover() == HoverMode.OFF) {
+			return null;
+		}
+
 		List<Match> keywords = new ArrayList<Match>();
 		for (Match bounds : matches) {
 			if (!bounds.contains(mousePoint)) {
 				continue;
 			}
 
-			if (config.onHover() == HoverMode.OFF) {
-				break;
-			}
-
 			keywords = matches.stream().filter(keywordBounds -> keywordBounds.index == bounds.index)
 					.collect(Collectors.toList());
 			break;
 		}
-
-		if (config.onHover() == HoverMode.OFF) {
-			return null;
-		}
-
-		final int wordCount = keywords.size();
-		for (int i = 0; i < wordCount; i++) {
-			Match bounds = keywords.get(i);
-
-			// width and x modifications make it look nicer.
-			int x = i == 0 ? bounds.x + 2 : bounds.x;
-			int width = wordCount > 1 && (i == 0 || i == wordCount - 1) ? bounds.width - 2 : bounds.width - 4;
-
-			// -4 correction because of earlier repositioning
-			final Rectangle hoverEffect = new Rectangle(x, bounds.y + CHATLINE_HEIGHT - 4, width, 1);
-
-			if (config.onHover() == HoverMode.HIGHLIGHT) {
-				hoverEffect.x = bounds.x;
-				hoverEffect.y = bounds.y - 3;
-				hoverEffect.height = CHATLINE_HEIGHT;
-				hoverEffect.width = bounds.width + 1;
-			}
-
-			graphics.setPaint(config.itemColor());
-			graphics.fill(hoverEffect);
-		}
-
+		drawKeywordOverlays(graphics, keywords);
 		return null;
 	}
 
@@ -299,11 +276,35 @@ class InteractiveChatOverlay extends Overlay {
 		return matches;
 	}
 
+	private void drawKeywordOverlays(Graphics2D graphics, List<Match> keywords) {
+		final int wordCount = keywords.size();
+		for (int i = 0; i < wordCount; i++) {
+			Match bounds = keywords.get(i);
+
+			// width and x modifications make it look nicer.
+			int x = i == 0 ? bounds.x + 2 : bounds.x;
+			int width = wordCount > 1 && (i == 0 || i == wordCount - 1) ? bounds.width - 2 : bounds.width - 4;
+
+			// -4 correction because of earlier repositioning
+			final Rectangle hoverEffect = new Rectangle(x, bounds.y + CHATLINE_HEIGHT - 4, width, 1);
+
+			if (config.onHover() == HoverMode.HIGHLIGHT) {
+				hoverEffect.x = bounds.x;
+				hoverEffect.y = bounds.y - 3;
+				hoverEffect.height = CHATLINE_HEIGHT;
+				hoverEffect.width = bounds.width;
+
+				if (GameClientLayout.from(client) != GameClientLayout.FIXED && client.getVarbitValue(Varbits.TRANSPARENT_CHATBOX.getId()) > 0) {
+					hoverEffect.width += 1;
+				}
+			}
+
+			graphics.setPaint(config.hoverColor());
+			graphics.fill(hoverEffect);
+		}
+	}
+
 	private void search(ScriptEvent ev) {
 		LinkBrowser.browse(WIKI_BASE.newBuilder().addQueryParameter("search", "").build().toString());
 	}
 }
-
-
-// varplayer 287 split chat
-// varbit 4089 split chat hidden

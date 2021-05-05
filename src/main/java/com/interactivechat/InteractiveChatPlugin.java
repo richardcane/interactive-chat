@@ -110,7 +110,7 @@ public class InteractiveChatPlugin extends Plugin {
       }
 
       final String searchTerm = part.substring(1, part.length() - 1);
-      builder.append(config.itemColor(), String.format("[%s]", searchTerm.trim().replaceAll(" +", " ")));
+      builder.append(config.textColor(), String.format("[%s]", searchTerm.trim().replaceAll(" +", " ")));
     }
 
     final String finalMessage = builder.build().replaceAll("<lt>", "<").replaceAll("<gt>", ">");

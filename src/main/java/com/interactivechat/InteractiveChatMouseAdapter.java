@@ -27,40 +27,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.interactivechat;
 
-import java.awt.Color;
+import net.runelite.client.input.MouseAdapter;
 
-import net.runelite.client.config.Alpha;
-import net.runelite.client.config.Config;
-import net.runelite.client.config.ConfigGroup;
-import net.runelite.client.config.ConfigItem;
-
-@ConfigGroup("interactivechat")
-public interface InteractiveChatConfig extends Config {
-  @ConfigItem(
-      keyName = "textColor",
-      name = "Text color",
-      description = "The color of interactive chat element text"
-  )
-  default Color textColor() {
-    return new Color(85, 175, 251);
-  }
-
-  @ConfigItem(
-    keyName = "onHover",
-    name = "On hover",
-    description = "What the plugin should do when you hover over a keyword"
-  )
-  default HoverMode onHover() {
-    return HoverMode.UNDERLINE;
-  }
-
-  @Alpha
-  @ConfigItem(
-      keyName = "hoverColor",
-      name = "Hover color",
-      description = "The color of interactive chat element hover effect"
-  )
-  default Color hoverColor() {
-    return new Color(85, 175, 251, 150);
-  }
-}
+public class InteractiveChatMouseAdapter extends MouseAdapter {
+		InteractiveChatMouseAdapter() {
+		}
+	}
