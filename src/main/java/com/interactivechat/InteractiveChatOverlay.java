@@ -120,7 +120,7 @@ class InteractiveChatOverlay extends Overlay {
 					.collect(Collectors.toList());
 			break;
 		}
-		drawKeywordOverlays(graphics, keywords);
+		drawHoverEffects(graphics, keywords);
 		return null;
 	}
 
@@ -276,7 +276,7 @@ class InteractiveChatOverlay extends Overlay {
 		return matches;
 	}
 
-	private void drawKeywordOverlays(Graphics2D graphics, List<Match> keywords) {
+	private void drawHoverEffects(Graphics2D graphics, List<Match> keywords) {
 		final int wordCount = keywords.size();
 		for (int i = 0; i < wordCount; i++) {
 			Match bounds = keywords.get(i);
