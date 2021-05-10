@@ -27,30 +27,35 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.interactivechat;
 
-import java.awt.Rectangle;
-import java.awt.event.MouseEvent;
+import java.awt.Point;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-import net.runelite.client.util.LinkBrowser;
+import javax.inject.Singleton;
 
-import okhttp3.HttpUrl;
+import lombok.AccessLevel;
+import lombok.Getter;
 
-public class Match {
-		static final HttpUrl WIKI_BASE = HttpUrl.parse("https://oldschool.runescape.wiki");
-		
-		final int index;
-		final String term;
-		final Rectangle bounds;
+@Singleton
+public class MatchManager {
+	@Getter(AccessLevel.PACKAGE)
+    private List<Match> matches = new CopyOnWriteArrayList<>();
 
-		Match(int index, String term, int x, int y, int width) {
-			this.bounds = new Rectangle(x, y + 4, width, InteractiveChat.CHATLINE_HEIGHT);
-			this.index = index;
-			this.term = term;
-		}
+   public void add(Match match) {
+      matches.add(match);
+   }
 
-		public MouseEvent onClick(MouseEvent e) {
-			LinkBrowser.browse(WIKI_BASE.newBuilder().addQueryParameter("search", term).build().toString());
+   public void clear() {
+      matches.clear();
+   }
 
-			e.consume();
-			return e;
-		}
-	}
+   public boolean pointInBounds(Point point) {
+      for (Match match : matches) {
+         if (match.bounds.contains(point)) {
+            return true;
+         }
+      }
+
+      return false;
+   }
+}

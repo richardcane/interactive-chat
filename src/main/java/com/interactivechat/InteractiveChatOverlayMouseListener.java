@@ -27,9 +27,43 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.interactivechat;
 
+import java.awt.event.MouseEvent;
+import java.util.List;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.swing.SwingUtilities;
+
+import net.runelite.api.Client;
+import net.runelite.api.Point;
 import net.runelite.client.input.MouseAdapter;
 
-public class InteractiveChatMouseAdapter extends MouseAdapter {
-		InteractiveChatMouseAdapter() {
-		}
-	}
+@Singleton
+public class InteractiveChatOverlayMouseListener extends MouseAdapter {
+	private final Client client;
+	private MatchManager matchManager;
+
+	@Inject
+	private InteractiveChatOverlayMouseListener(Client client, MatchManager matchManager)
+   {
+      this.client = client;
+      this.matchManager = matchManager;
+   }
+
+   @Override
+   public MouseEvent mousePressed(MouseEvent e) {
+      final List<Match> matches = matchManager.getMatches();
+      if (!SwingUtilities.isLeftMouseButton(e) || matches.isEmpty()) {
+         return e;
+      }
+
+      Point mouse = client.getMouseCanvasPosition();
+      for (Match match : matches) {
+         if (match.bounds.contains(mouse.getX(), mouse.getY())) {
+            return match.onClick(e);
+         }
+      }
+
+      return e;
+   }
+}
