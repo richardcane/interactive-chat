@@ -7,11 +7,11 @@ Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
 1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
+	list of conditions and the following disclaimer.
 
 2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
+	this list of conditions and the following disclaimer in the documentation
+	and/or other materials provided with the distribution.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -39,23 +39,23 @@ import lombok.Getter;
 @Singleton
 public class MatchManager {
 	@Getter(AccessLevel.PACKAGE)
-    private List<Match> matches = new CopyOnWriteArrayList<>();
+	 private List<Match> matches = new CopyOnWriteArrayList<>();
 
-   public void add(Match match) {
-      matches.add(match);
-   }
+	public void add(Match match) {
+		matches.add(match);
+	}
 
-   public void clear() {
-      matches.clear();
-   }
+	public void clear() {
+		matches.clear();
+	}
 
-   public boolean pointInBounds(Point point) {
-      for (Match match : matches) {
-         if (match.bounds.contains(point)) {
-            return true;
-         }
-      }
+	public boolean pointInBounds(Point point) {
+		for (Match match : matches) {
+			if (match.bounds.contains(point)) {
+				return true;
+			}
+		}
 
-      return false;
-   }
+		return false;
+	}
 }

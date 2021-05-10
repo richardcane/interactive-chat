@@ -7,11 +7,11 @@ Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
 1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
+	 list of conditions and the following disclaimer.
 
 2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
+	 this list of conditions and the following disclaimer in the documentation
+	 and/or other materials provided with the distribution.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -46,77 +46,77 @@ import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.Text;
 
 @PluginDescriptor(
-    name = "Interactive Chat",
-    description = "Lets users send interactive chat messages",
-    tags = {"interactive", "chat", "wiki", "search"})
+		name = "Interactive Chat",
+		description = "Lets users send interactive chat messages",
+		tags = {"interactive", "chat", "wiki", "search"})
 public class InteractiveChatPlugin extends Plugin {
-  static final Pattern BRACKETED_PATTERN = InteractiveChat.BRACKETED_PATTERN;
-  static final String LEFT_DELIMITER = InteractiveChat.LEFT_DELIMITER;
-  static final String RIGHT_DELIMITER = InteractiveChat.RIGHT_DELIMITER;
+	static final Pattern BRACKETED_PATTERN = InteractiveChat.BRACKETED_PATTERN;
+	static final String LEFT_DELIMITER = InteractiveChat.LEFT_DELIMITER;
+	static final String RIGHT_DELIMITER = InteractiveChat.RIGHT_DELIMITER;
 
-  @Inject private ChatMessageManager chatMessageManager;
+	@Inject private ChatMessageManager chatMessageManager;
 
-  @Inject private Client client;
+	@Inject private Client client;
 
-  @Inject private InteractiveChatConfig config;
+	@Inject private InteractiveChatConfig config;
 
-  @Inject private InteractiveChatOverlay overlay;
+	@Inject private InteractiveChatOverlay overlay;
 
-  @Inject private OverlayManager overlayManager;
+	@Inject private OverlayManager overlayManager;
 
-  @Provides
-  InteractiveChatConfig provideConfig(ConfigManager configManager) {
-    return configManager.getConfig(InteractiveChatConfig.class);
-  }
+	@Provides
+	InteractiveChatConfig provideConfig(ConfigManager configManager) {
+		return configManager.getConfig(InteractiveChatConfig.class);
+	}
 
-  @Override
-  protected void startUp() throws Exception {
-    overlayManager.add(overlay);
-  }
+	@Override
+	protected void startUp() throws Exception {
+		overlayManager.add(overlay);
+	}
 
-  @Override
-  protected void shutDown() throws Exception {
-    overlay.unsetContainerWidgets();
-    overlayManager.remove(overlay);
-  }
+	@Override
+	protected void shutDown() throws Exception {
+		overlay.unsetContainerWidgets();
+		overlayManager.remove(overlay);
+	}
 
-  @Subscribe
-  public void onChatMessage(ChatMessage chatMessage) {
-    final ChatMessageType type = chatMessage.getType();
-    switch (type) {
-      case MODCHAT:
-      case PUBLICCHAT:
-      case PRIVATECHAT:
-      case PRIVATECHATOUT:
-      case MODPRIVATECHAT:
-      case FRIENDSCHAT:
-        break;
-      default:
-        return;
-    }
+	@Subscribe
+	public void onChatMessage(ChatMessage chatMessage) {
+		final ChatMessageType type = chatMessage.getType();
+		switch (type) {
+			case MODCHAT:
+			case PUBLICCHAT:
+			case PRIVATECHAT:
+			case PRIVATECHATOUT:
+			case MODPRIVATECHAT:
+			case FRIENDSCHAT:
+				break;
+			default:
+				return;
+		}
 
-    final String message = Text.removeFormattingTags(chatMessage.getMessage());
-    final String[] parts = BRACKETED_PATTERN.split(message);
-    if (parts.length == 1 && !message.startsWith(LEFT_DELIMITER)) {
-      return;
-    }
+		final String message = Text.removeFormattingTags(chatMessage.getMessage());
+		final String[] parts = BRACKETED_PATTERN.split(message);
+		if (parts.length == 1 && !message.startsWith(LEFT_DELIMITER)) {
+			return;
+		}
 
-    ChatMessageBuilder builder = new ChatMessageBuilder();
-    for (String part : parts) {
-      if (!part.startsWith(LEFT_DELIMITER) || !part.endsWith(RIGHT_DELIMITER)) {
-        builder.append(ChatColorType.NORMAL);
-        builder.append(part);
-        continue;
-      }
+		ChatMessageBuilder builder = new ChatMessageBuilder();
+		for (String part : parts) {
+			if (!part.startsWith(LEFT_DELIMITER) || !part.endsWith(RIGHT_DELIMITER)) {
+				builder.append(ChatColorType.NORMAL);
+				builder.append(part);
+				continue;
+			}
 
-      final String searchTerm = part.substring(1, part.length() - 1);
-      builder.append(config.textColor(), String.format("[%s]", searchTerm.trim().replaceAll(" +", " ")));
-    }
+			final String searchTerm = part.substring(1, part.length() - 1);
+			builder.append(config.textColor(), String.format("[%s]", searchTerm.trim().replaceAll(" +", " ")));
+		}
 
-    final String finalMessage = builder.build().replaceAll("<lt>", "<").replaceAll("<gt>", ">");
-    final MessageNode messageNode = chatMessage.getMessageNode();
-    messageNode.setRuneLiteFormatMessage(finalMessage);
-    chatMessageManager.update(messageNode);
-    client.refreshChat();
-  }
+		final String finalMessage = builder.build().replaceAll("<lt>", "<").replaceAll("<gt>", ">");
+		final MessageNode messageNode = chatMessage.getMessageNode();
+		messageNode.setRuneLiteFormatMessage(finalMessage);
+		chatMessageManager.update(messageNode);
+		client.refreshChat();
+	}
 }

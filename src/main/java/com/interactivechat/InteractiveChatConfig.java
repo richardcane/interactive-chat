@@ -7,11 +7,11 @@ Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
 1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
+	 list of conditions and the following disclaimer.
 
 2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
+	 this list of conditions and the following disclaimer in the documentation
+	 and/or other materials provided with the distribution.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -36,31 +36,31 @@ import net.runelite.client.config.ConfigItem;
 
 @ConfigGroup("interactivechat")
 public interface InteractiveChatConfig extends Config {
-  @ConfigItem(
-      keyName = "textColor",
-      name = "Text color",
-      description = "The color of interactive chat element text"
-  )
-  default Color textColor() {
-    return new Color(85, 175, 251);
-  }
+	@ConfigItem(
+			keyName = "textColor",
+			name = "Text color",
+			description = "The color of interactive chat element text"
+	)
+	default Color textColor() {
+		return new Color(85, 175, 251);
+	}
 
-  @ConfigItem(
-    keyName = "onHover",
-    name = "On hover",
-    description = "What the plugin should do when you hover over a keyword"
-  )
-  default HoverMode onHover() {
-    return HoverMode.UNDERLINE;
-  }
+	@ConfigItem(
+		keyName = "onHover",
+		name = "On hover",
+		description = "What the plugin should do when you hover over a keyword"
+	)
+	default HoverMode onHover() {
+		return HoverMode.UNDERLINE;
+	}
 
-  @Alpha
-  @ConfigItem(
-      keyName = "hoverColor",
-      name = "Hover color",
-      description = "The color of interactive chat element hover effect"
-  )
-  default Color hoverColor() {
-    return new Color(85, 175, 251, 150);
-  }
+	@Alpha
+	@ConfigItem(
+			keyName = "hoverColor",
+			name = "Hover color",
+			description = "The color of interactive chat element hover effect"
+	)
+	default Color hoverColor() {
+		return new Color(85, 175, 251, 150);
+	}
 }
