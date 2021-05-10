@@ -31,11 +31,11 @@ import net.runelite.api.Client;
 import net.runelite.api.Varbits;
 
 public enum GameClientLayout {
-  FIXED,
-  RESIZABLE_CLASSIC,
-  RESIZABLE_MODERN;
+	FIXED,
+	RESIZABLE_CLASSIC,
+	RESIZABLE_MODERN;
 
-  public static GameClientLayout from(Client client)
+	public static GameClientLayout from(Client client)
 	{
 		if (client.isResized())
 		{
@@ -45,7 +45,7 @@ public enum GameClientLayout {
 			}
 			else
 			{
-        return RESIZABLE_CLASSIC;
+				return RESIZABLE_CLASSIC;
 			}
 		}
 		return FIXED;
