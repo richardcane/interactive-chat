@@ -7,11 +7,11 @@ Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
 1. Redistributions of source code must retain the above copyright notice, this
-	 list of conditions and the following disclaimer.
+   list of conditions and the following disclaimer.
 
 2. Redistributions in binary form must reproduce the above copyright notice,
-	 this list of conditions and the following disclaimer in the documentation
-	 and/or other materials provided with the distribution.
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -35,22 +35,22 @@ import net.runelite.client.util.LinkBrowser;
 import okhttp3.HttpUrl;
 
 public class Match {
-		static final HttpUrl WIKI_BASE = HttpUrl.parse("https://oldschool.runescape.wiki");
-		
-		final int index;
-		final String term;
-		final Rectangle bounds;
+    static final HttpUrl WIKI_BASE = HttpUrl.parse("https://oldschool.runescape.wiki");
+    
+    final int index;
+    final String term;
+    final Rectangle bounds;
 
-		Match(int index, String term, int x, int y, int width) {
-			this.bounds = new Rectangle(x, y + 4, width, InteractiveChat.CHATLINE_HEIGHT);
-			this.index = index;
-			this.term = term;
-		}
+    Match(int index, String term, int x, int y, int width) {
+      this.bounds = new Rectangle(x, y + 4, width, InteractiveChat.CHATLINE_HEIGHT);
+      this.index = index;
+      this.term = term;
+    }
 
-		public MouseEvent onClick(MouseEvent e) {
-			LinkBrowser.browse(WIKI_BASE.newBuilder().addQueryParameter("search", term).build().toString());
+    public MouseEvent onClick(MouseEvent e) {
+      LinkBrowser.browse(WIKI_BASE.newBuilder().addQueryParameter("search", term).build().toString());
 
-			e.consume();
-			return e;
-		}
-	}
+      e.consume();
+      return e;
+    }
+  }
