@@ -44,6 +44,7 @@ import net.runelite.api.Client;
 import net.runelite.api.FontTypeFace;
 import net.runelite.api.Varbits;
 import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.events.ResizeableChanged;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.eventbus.EventBus;
@@ -134,16 +135,22 @@ class InteractiveChatOverlay extends Overlay {
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged event) {
 		switch (event.getGameState()) {
-		case LOGGING_IN:
-		case HOPPING:
-			destroy();
-			break;
-		default:
-			break;
+			case LOGGING_IN:
+			case HOPPING:
+				unsetContainerWidgets();
+				break;
+			default:
+				break;
 		}
 	}
+	
+	@Subscribe
+	public void onResizeableChanged(ResizeableChanged event)
+	{
+		unsetContainerWidgets();
+	}
 
-	public void destroy() {
+	public void unsetContainerWidgets() {
 		messageLinesWidget = null;
 		splitChatWidget = null;
 	}
@@ -152,11 +159,12 @@ class InteractiveChatOverlay extends Overlay {
 		messageLinesWidget = getMessageLinesWidget();
 		if (messageLinesWidget != null && messageLinesWidget.getBounds().contains(point)) {
 			Optional<Widget> maybeMessageWidget = Stream.of(messageLinesWidget.getChildren())
-					// 486 = chatbox width; ignores various game messages and parent chat lines
-					.filter(widget -> !widget.isHidden()).filter(widget -> widget.getWidth() != 486)
+					// 486 = message line container width
+					// ignores various game messages and parent chat lines
+					.filter(widget -> widget.getWidth() != 486)
+					.filter(widget -> !widget.isHidden())
 					.filter(widget -> widget.getId() < WidgetInfo.CHATBOX_FIRST_MESSAGE.getId())
 					.filter(widget -> {
-						// hitboxes don't extend to the bottom otherwise
 						Rectangle bounds = widget.getBounds();
 						bounds.height += 2;
 
@@ -177,10 +185,9 @@ class InteractiveChatOverlay extends Overlay {
 		
 		splitChatWidget = getSplitChatWidget();
 		Optional<Widget> maybeSplitMessageWidget = Stream.of(splitChatWidget.getChildren())
-			// 519 = split chat widget width
-			.filter(widget -> widget.getWidth() != 519)
+			.filter(widget -> widget.getWidth() != splitChatWidget.getWidth())
 			.filter(widget -> {
-				// same as above				
+				// same as above
 				Rectangle bounds = widget.getBounds();
 				bounds.y += 2;
 
