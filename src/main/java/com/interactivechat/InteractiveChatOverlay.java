@@ -49,7 +49,6 @@ import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
-import net.runelite.client.input.MouseManager;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
@@ -76,9 +75,7 @@ class InteractiveChatOverlay extends Overlay {
       InteractiveChatConfig config,
       Client client,
       MatchManager matchManager,
-      EventBus eventBus,
-      MouseManager mouseManager,
-      InteractiveChatOverlayMouseListener interactiveChatOverlayMouseListener
+      EventBus eventBus
   ) {
     setPosition(OverlayPosition.DYNAMIC);
     setLayer(OverlayLayer.ALWAYS_ON_TOP);
@@ -88,7 +85,6 @@ class InteractiveChatOverlay extends Overlay {
     this.matchManager = matchManager;
 
     eventBus.register(this);
-    mouseManager.registerMouseListener(interactiveChatOverlayMouseListener);
   }
 
   @Override
@@ -126,7 +122,6 @@ class InteractiveChatOverlay extends Overlay {
     for (Match match : keywords) {
       matchManager.add(match);
     }
-
 
     drawHoverEffects(graphics, keywords);
     return null;

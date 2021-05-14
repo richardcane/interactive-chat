@@ -40,6 +40,7 @@ import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.input.MouseManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -54,15 +55,20 @@ public class InteractiveChatPlugin extends Plugin {
   static final String LEFT_DELIMITER = InteractiveChat.LEFT_DELIMITER;
   static final String RIGHT_DELIMITER = InteractiveChat.RIGHT_DELIMITER;
 
-  @Inject private ChatMessageManager chatMessageManager;
-
+  
   @Inject private Client client;
-
+  
+  @Inject private OverlayManager overlayManager;
+  
+  @Inject private ChatMessageManager chatMessageManager;
+  
   @Inject private InteractiveChatConfig config;
 
   @Inject private InteractiveChatOverlay overlay;
 
-  @Inject private OverlayManager overlayManager;
+  @Inject private InteractiveChatOverlayMouseListener interactiveChatOverlayMouseListener;
+  
+  @Inject private MouseManager mouseManager;
 
   @Provides
   InteractiveChatConfig provideConfig(ConfigManager configManager) {
@@ -72,12 +78,14 @@ public class InteractiveChatPlugin extends Plugin {
   @Override
   protected void startUp() throws Exception {
     overlayManager.add(overlay);
+    mouseManager.registerMouseListener(interactiveChatOverlayMouseListener);
   }
 
   @Override
   protected void shutDown() throws Exception {
     overlay.unsetContainerWidgets();
     overlayManager.remove(overlay);
+    mouseManager.unregisterMouseListener(interactiveChatOverlayMouseListener);
   }
 
   @Subscribe
