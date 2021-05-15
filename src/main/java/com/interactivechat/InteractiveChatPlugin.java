@@ -39,6 +39,7 @@ import net.runelite.client.chat.ChatColorType;
 import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.input.MouseManager;
 import net.runelite.client.plugins.Plugin;
@@ -57,18 +58,14 @@ public class InteractiveChatPlugin extends Plugin {
 
   
   @Inject private Client client;
-  
   @Inject private OverlayManager overlayManager;
-  
   @Inject private ChatMessageManager chatMessageManager;
+  @Inject private MouseManager mouseManager;
+  @Inject private EventBus eventBus;
   
   @Inject private InteractiveChatConfig config;
-
   @Inject private InteractiveChatOverlay overlay;
-
   @Inject private InteractiveChatOverlayMouseListener interactiveChatOverlayMouseListener;
-  
-  @Inject private MouseManager mouseManager;
 
   @Provides
   InteractiveChatConfig provideConfig(ConfigManager configManager) {
@@ -78,6 +75,7 @@ public class InteractiveChatPlugin extends Plugin {
   @Override
   protected void startUp() throws Exception {
     overlayManager.add(overlay);
+    eventBus.register(overlay);
     mouseManager.registerMouseListener(interactiveChatOverlayMouseListener);
   }
 
@@ -85,6 +83,7 @@ public class InteractiveChatPlugin extends Plugin {
   protected void shutDown() throws Exception {
     overlay.unsetContainerWidgets();
     overlayManager.remove(overlay);
+    eventBus.unregister(overlay);
     mouseManager.unregisterMouseListener(interactiveChatOverlayMouseListener);
   }
 

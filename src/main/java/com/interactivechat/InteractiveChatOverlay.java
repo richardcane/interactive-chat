@@ -47,7 +47,6 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.ResizeableChanged;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
-import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
@@ -74,8 +73,7 @@ class InteractiveChatOverlay extends Overlay {
   InteractiveChatOverlay(
       InteractiveChatConfig config,
       Client client,
-      MatchManager matchManager,
-      EventBus eventBus
+      MatchManager matchManager
   ) {
     setPosition(OverlayPosition.DYNAMIC);
     setLayer(OverlayLayer.ALWAYS_ON_TOP);
@@ -83,8 +81,6 @@ class InteractiveChatOverlay extends Overlay {
     this.config = config;
     this.client = client;
     this.matchManager = matchManager;
-
-    eventBus.register(this);
   }
 
   @Override
